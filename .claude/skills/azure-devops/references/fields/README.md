@@ -1,11 +1,19 @@
-# Generated field references
+# 生成されるフィールド定義
 
-`wit describe-type --type "<type>" --save` writes `<project>.<type>.md` here: a table of
-every field on that work item type with its display name, reference name, data type, required
-flag and allowed values, plus the type's valid states.
+`wit describe-type --type "<型名>" --save` が、このディレクトリに
+`<プロジェクト>.<型>.md` を書き出す。内容は、その作業アイテム型が持つ全フィールドの
+表示名・参照名・データ型・必須フラグ・許可値と、その型で有効な State の一覧。
 
-These files are server-specific. On-premises process templates are routinely customised, so
-what one Azure DevOps Server reports is not what another reports. Commit them if the team
-shares a single server; regenerate them after any process-template change.
+## コミットしない
 
-A write that fails with HTTP 400 naming an unknown field means the file is stale.
+生成されたファイルはリポジトリにコミットしない。`.gitignore` で除外済み。
+
+ヘッダにサーバ URL とプロジェクト名が入り、表の中身は社内のプロセステンプレートの定義
+そのものになる。これらはこのリポジトリの公開範囲の外にある情報のため、各実行環境の
+ローカルに置いたままにする。
+
+## 生成のタイミング
+
+実行環境ごとに、初回セットアップ時に扱う型ぶんを生成する。プロセステンプレートを変更した
+後は再生成する。書き込みが「存在しないフィールド」を示す HTTP 400 で失敗したときは、
+このファイルが古くなっている。
