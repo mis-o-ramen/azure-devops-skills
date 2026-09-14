@@ -545,6 +545,26 @@ def pr_threads(client, args):
     emit({"count": len(threads), "threads": threads})
 
 
+def pr_workitems(client, args):
+    """Work items linked to the pull request, with their fields resolved."""
+    data = client.request("GET", _repo_path(args.repo, f"/pullRequests/{args.id}/workitems"))
+    ids = []
+    for ref in data.get("value", []) or []:
+        try:
+            ids.append(int(ref.get("id")))
+        except (TypeError, ValueError):
+            continue
+    if not ids:
+        emit({"count": 0, "workItems": []})
+        return
+    if args.ids_only:
+        emit({"count": len(ids), "ids": ids})
+        return
+    fields = [f.strip() for f in args.fields.split(",")] if args.fields else None
+    items = _fetch_work_items(client, ids, fields=fields)
+    emit({"count": len(items), "workItems": items})
+
+
 def pr_comment(client, args):
     text = read_value(args.text)
     if args.thread:
@@ -816,6 +836,13 @@ def build_parser():
     p.add_argument("--include-system", action="store_true",
                    help="Include system-generated comments.")
     p.set_defaults(func=pr_threads)
+
+    p = pr.add_parser("workitems", help="Work items linked to a pull request.")
+    p.add_argument("id", type=int)
+    p.add_argument("--repo", required=True)
+    p.add_argument("--fields", help="Comma-separated reference names (default: all).")
+    p.add_argument("--ids-only", action="store_true")
+    p.set_defaults(func=pr_workitems)
 
     p = pr.add_parser("comment", help="Post a comment on a pull request.")
     p.add_argument("id", type=int)

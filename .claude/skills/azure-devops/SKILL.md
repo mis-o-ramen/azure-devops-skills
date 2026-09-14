@@ -1,6 +1,6 @@
 ---
 name: azure-devops
-description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新、受け入れ基準など型ごとに異なるフィールドの取得、プルリクエストの参照とコメント、失敗したビルドパイプラインの調査。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。Use for work items, pull requests and builds on a self-hosted Azure DevOps / TFS server.
+description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新、受け入れ基準など型ごとに異なるフィールドの取得、プルリクエストの参照・レビュー・コメント、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、コードレビュー、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。Use for work items, pull requests and builds on a self-hosted Azure DevOps / TFS server.
 ---
 
 # Azure DevOps Server（オンプレミス）
@@ -91,6 +91,7 @@ wit comments 1234                         # ディスカッションを読む
 pr list --repo <repo> [--status active] [--target main]
 pr get <id> --repo <repo>
 pr threads <id> --repo <repo> [--unresolved-only]
+pr workitems <id> --repo <repo>           # 紐づく作業アイテムをフィールドごと取得
 pr comment <id> --repo <repo> --text "…" [--file path --line N] [--thread N]
 pr create --repo <repo> --source <branch> --target <branch> --title "…"
 ```
@@ -101,6 +102,12 @@ pr create --repo <repo> --source <branch> --target <branch> --title "…"
 
 プルリクエストの完了・破棄、投票、ブランチポリシーの上書きは意図的に実装していない。
 エージェント側から取り消せないため、プルリクエストの URL を提示して人間に判断を委ねる。
+
+### レビューする
+
+レビューを求められたら、先に `references/workflows/pr-review.md` を読む。差分の取り方、
+受け入れ基準との突き合わせ、指摘の優先度と書式、行アンカーのずれの検証まで、そこに
+手順がある。
 
 ## ビルド
 
@@ -133,5 +140,6 @@ python3 scripts/ado.py request POST /wit/wiql --data @query.json
 
 ## 参照
 
+- `references/workflows/` — 判断を伴う手順（レビューなど）。該当する作業のときに読む
 - `references/recipes.md` — WIQL の書き方、頻出フロー、トラブルシュート
 - `references/fields/` — 生成されたプロジェクト×型ごとのフィールド定義
