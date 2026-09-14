@@ -1,6 +1,6 @@
 ---
 name: azure-devops
-description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新、受け入れ基準など型ごとに異なるフィールドの取得、プルリクエストの参照・レビュー・コメント、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、コードレビュー、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。Use for work items, pull requests and builds on a self-hosted Azure DevOps / TFS server.
+description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新、受け入れ基準など型ごとに異なるフィールドの取得、プルリクエストの参照・レビュー・コメント・作成、レビュー指摘への対応、PR に紐づく作業アイテムの取得、作業アイテムからの実装、調査結果の報告、失敗したビルドパイプラインの調査。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、コードレビュー、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。Use for work items, pull requests and builds on a self-hosted Azure DevOps / TFS server.
 ---
 
 # Azure DevOps Server（オンプレミス）
@@ -103,12 +103,6 @@ pr create --repo <repo> --source <branch> --target <branch> --title "…"
 プルリクエストの完了・破棄、投票、ブランチポリシーの上書きは意図的に実装していない。
 エージェント側から取り消せないため、プルリクエストの URL を提示して人間に判断を委ねる。
 
-### レビューする
-
-レビューを求められたら、先に `references/workflows/pr-review.md` を読む。差分の取り方、
-受け入れ基準との突き合わせ、指摘の優先度と書式、行アンカーのずれの検証まで、そこに
-手順がある。
-
 ## ビルド
 
 ```
@@ -125,6 +119,20 @@ build logs <id> [--fetch] [--tail 200] [--log <logId>]
 
 ビルドの実行トリガはスコープ外。
 
+## 判断を伴う作業
+
+次の作業は、コマンドを並べるだけでは決まらない判断を含む。着手する前に該当するファイルを読む。
+
+| 依頼 | 読むファイル |
+| --- | --- |
+| プルリクエストをレビューする | `references/workflows/pr-review.md` |
+| レビュー指摘に対応する | `references/workflows/pr-fix.md` |
+| 作業アイテムを実装する | `references/workflows/work-item-implement.md` |
+| 調査して報告する | `references/workflows/research.md` |
+
+報告の書き方は `references/workflows/writing.md` に共通で置いてある。各ファイルはそこに
+固有の上限を足す。
+
 ## それ以外の操作
 
 `scripts/ado.py request <METHOD> <パス>` で任意のエンドポイントを直接呼べる。認証・
@@ -140,6 +148,6 @@ python3 scripts/ado.py request POST /wit/wiql --data @query.json
 
 ## 参照
 
-- `references/workflows/` — 判断を伴う手順（レビューなど）。該当する作業のときに読む
+- `references/workflows/` — 判断を伴う手順。該当する作業のときに読む
 - `references/recipes.md` — WIQL の書き方、頻出フロー、トラブルシュート
 - `references/fields/` — 生成されたプロジェクト×型ごとのフィールド定義

@@ -10,7 +10,12 @@
 ├── SKILL.md                  # エージェントが読み込むエントリポイント
 ├── scripts/ado.py            # REST クライアント。Python 3 標準ライブラリのみ
 └── references/
-    ├── workflows/            # 判断を伴う手順（レビューなど）
+    ├── workflows/            # 判断を伴う手順
+    │   ├── writing.md              # 報告の書き方（全手順の共通規約）
+    │   ├── pr-review.md            # プルリクエストをレビューする
+    │   ├── pr-fix.md               # レビュー指摘に対応する
+    │   ├── work-item-implement.md  # 作業アイテムを実装する
+    │   └── research.md             # 調査して報告する
     ├── recipes.md            # WIQL の書き方、頻出フロー、トラブルシュート
     └── fields/               # 生成されるフィールド定義（コミットしない）
 ```
@@ -22,6 +27,7 @@
 | 層 | 置き場所 | 何を書くか |
 | --- | --- | --- |
 | 手順 | `references/workflows/*.md` | 判断を伴う作業の進め方。その作業固有の優先度・出力規約・上限 |
+| 共通 | `references/workflows/writing.md` | 報告の書き方。各手順はここに固有の上限を足す |
 | 能力 | `SKILL.md` と `scripts/ado.py` | ADO を操作する方法。コマンドと、その使い分け |
 
 `SKILL.md` は毎回コンテキストに載るため、能力層に徹して薄く保つ。手順は該当する作業の

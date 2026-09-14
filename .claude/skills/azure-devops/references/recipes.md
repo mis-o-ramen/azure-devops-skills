@@ -78,7 +78,7 @@ wit create --type "User Story" \
 この表はあくまで当たりをつけるための目安で、答えではない。そのサーバでの正解は
 `references/fields/` に生成されたファイル。
 
-## プルリクエストのレビューコメントに対応する
+## レビュースレッドに返信する
 
 ```
 pr threads 812 --repo billing-api --unresolved-only
