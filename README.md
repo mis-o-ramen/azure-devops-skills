@@ -1,23 +1,31 @@
 # azure-devops-skills
 
-オンプレミスの **Azure DevOps Server 2022** を操作するエージェントスキル。作業アイテム、
-プルリクエスト、ビルドパイプラインを扱う。
+オンプレミスの **Azure DevOps Server 2022** を使った開発のためのエージェントスキル。作業
+アイテム、プルリクエスト、ビルドパイプラインの操作を中心に、その周辺の手順を収めている。
+
+| スキル | 何をするか |
+| --- | --- |
+| `azure-devops` | ADO の操作と、レビュー・実装・調査の手順 |
+| `coding-rules` | プロジェクトのコーディング規約を整備する |
 
 ## 構成
 
 ```
-.claude/skills/azure-devops/
-├── SKILL.md                  # エージェントが読み込むエントリポイント
-├── scripts/ado.py            # REST クライアント。Python 3 標準ライブラリのみ
-└── references/
-    ├── workflows/            # 判断を伴う手順
-    │   ├── writing.md              # 報告の書き方（全手順の共通規約）
-    │   ├── pr-review.md            # プルリクエストをレビューする
-    │   ├── pr-fix.md               # レビュー指摘に対応する
-    │   ├── work-item-implement.md  # 作業アイテムを実装する
-    │   └── research.md             # 調査して報告する
-    ├── recipes.md            # WIQL の書き方、頻出フロー、トラブルシュート
-    └── fields/               # 生成されるフィールド定義（コミットしない）
+.claude/skills/
+├── azure-devops/
+│   ├── SKILL.md              # エージェントが読み込むエントリポイント
+│   ├── scripts/ado.py        # REST クライアント。Python 3 標準ライブラリのみ
+│   └── references/
+│       ├── workflows/        # 判断を伴う手順
+│       │   ├── writing.md              # 報告の書き方（全手順の共通規約）
+│       │   ├── pr-review.md            # プルリクエストをレビューする
+│       │   ├── pr-fix.md               # レビュー指摘に対応する
+│       │   ├── work-item-implement.md  # 作業アイテムを実装する
+│       │   └── research.md             # 調査して報告する
+│       ├── recipes.md        # WIQL の書き方、頻出フロー、トラブルシュート
+│       └── fields/           # 生成されるフィールド定義（コミットしない）
+└── coding-rules/
+    └── SKILL.md              # 規約の抽出手順と、埋める欄の定義
 
 tools/                        # スキル本体ではなく、スキルを検証するための道具
 ├── check-html.py             # 書き込んだ HTML が読み戻せるかを確かめる
@@ -38,12 +46,12 @@ tools/                        # スキル本体ではなく、スキルを検証
 ときだけ読ませる。ワークフローが 1 本増えても `SKILL.md` の増分は 1 行で済む。
 
 ワークフローが ADO 以外の道具を主役にし、ADO が単なる入出力先になったら、その時点で
-別スキルに切り出す。
+別スキルに切り出す。`coding-rules` は ADO を一切使わないため、この基準で独立している。
 
 ## Claude と GitHub Copilot の両方で動く
 
 1 コピーで両対応する。GitHub Copilot はスキルを `.github/skills`、`.claude/skills`、
-`.agents/skills` から読み込むため、上の構成がそのまま Copilot coding agent・Copilot CLI・
+`.agents/skills` から読み込むため、この構成がそのまま Copilot coding agent・Copilot CLI・
 VS Code の agent mode で認識される。Claude Code も同じディレクトリを読む。
 
 そのため `SKILL.md` は道具非依存に書いてある。同梱スクリプトの実行を指示するだけで、
@@ -69,22 +77,26 @@ git clone <このリポジトリ> ~/src/azure-devops-skills
 
 ```sh
 mkdir -p ~/.claude/skills ~/.copilot/skills
-ln -s ~/src/azure-devops-skills/.claude/skills/azure-devops ~/.claude/skills/azure-devops
-ln -s ~/src/azure-devops-skills/.claude/skills/azure-devops ~/.copilot/skills/azure-devops
+for s in azure-devops coding-rules; do
+  ln -s ~/src/azure-devops-skills/.claude/skills/$s ~/.claude/skills/$s
+  ln -s ~/src/azure-devops-skills/.claude/skills/$s ~/.copilot/skills/$s
+done
 ```
 
 **Windows（PowerShell）** — シンボリックリンクには開発者モードか管理者権限が要る。
 
 ```powershell
-New-Item -ItemType SymbolicLink -Path "$HOME\.claude\skills\azure-devops" `
-         -Target "$HOME\src\azure-devops-skills\.claude\skills\azure-devops"
+foreach ($s in "azure-devops", "coding-rules") {
+  New-Item -ItemType SymbolicLink -Path "$HOME\.claude\skills\$s" `
+           -Target "$HOME\src\azure-devops-skills\.claude\skills\$s"
+}
 ```
 
 権限が得られない場合はコピーでもよい。ただし `git pull` のたびにコピーし直す必要があり、
 生成済みのフィールド定義はコピー先に置かれるため上書きに注意する。
 
 ```powershell
-Copy-Item -Recurse -Force "$HOME\src\azure-devops-skills\.claude\skills\azure-devops" `
+Copy-Item -Recurse -Force "$HOME\src\azure-devops-skills\.claude\skills\*" `
           "$HOME\.claude\skills\"
 ```
 
@@ -144,8 +156,7 @@ python3 tools/check-html.py <作成された id>
 - プロセステンプレートを変更したとき
 - Azure DevOps Server を更新したとき
 
-## 対応範囲
-
+## ADO の対応範囲
 | 含む | 含まない |
 | --- | --- |
 | 作業アイテム: WIQL 検索、参照、作成、更新、コメント、フィールドと State の取得 | 添付ファイル、リンク階層、プロセステンプレートの編集 |
