@@ -78,40 +78,6 @@ wit create --type "User Story" \
 この表はあくまで当たりをつけるための目安で、答えではない。そのサーバでの正解は
 `references/fields/` に生成されたファイル。
 
-## プルリクエストをレビューする
-
-差分は `git` で、文脈は REST で取る。
-
-```
-# 1. 対象のブランチ名を確認する
-pr get 812 --repo billing-api
-
-# 2. 差分を取る（sourceRefName / targetRefName から refs/heads/ を外したもの）
-git fetch origin
-git diff origin/main...origin/feature/csv-export
-
-# 3. この PR が満たすべき受け入れ基準を読む
-pr workitems 812 --repo billing-api
-
-# 4. 既に出ている指摘を確認して重複を避ける
-pr threads 812 --repo billing-api --unresolved-only
-
-# 5. 行を指定して指摘する
-pr comment 812 --repo billing-api \
-  --file /src/billing/export.py --line 143 \
-  --text "端数処理が受け入れ基準の「小数第2位で切り捨て」と逆になっている。"
-
-# 6. 全体に関わる指摘はトップレベルのスレッドに書く
-pr comment 812 --repo billing-api --text @review-summary.md
-```
-
-行番号は差分を取った時点のソースブランチを前提にしている。5 の前に、`pr get` の
-`lastMergeSourceCommit` が `git rev-parse origin/feature/csv-export` と一致するか確認する。
-一致しなければ新しい push が入っており、行がずれる。
-
-対象リポジトリをローカルに clone していない場合、差分は取れない。この手順は clone 済みで
-あることが前提。
-
 ## プルリクエストのレビューコメントに対応する
 
 ```

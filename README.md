@@ -10,9 +10,27 @@
 ├── SKILL.md                  # エージェントが読み込むエントリポイント
 ├── scripts/ado.py            # REST クライアント。Python 3 標準ライブラリのみ
 └── references/
+    ├── workflows/            # 判断を伴う手順（レビューなど）
     ├── recipes.md            # WIQL の書き方、頻出フロー、トラブルシュート
     └── fields/               # 生成されるフィールド定義（コミットしない）
 ```
+
+## 3 つの層
+
+肥大化を防ぐため、書くものの置き場所を層で分けている。
+
+| 層 | 置き場所 | 何を書くか |
+| --- | --- | --- |
+| 形式 | `output-contract` スキル（[ai-workflows](https://github.com/mis-o-ramen/ai-workflows) が正典） | 人間が読んで判断する出力すべてに効く形。結論先出し、確証のないことを書かない、コードは `path:line` で示す |
+| 手順 | `references/workflows/*.md` | 判断を伴う作業の進め方。そのワークフロー固有の優先度・セクション構成・上限 |
+| 能力 | `SKILL.md` と `scripts/ado.py` | ADO を操作する方法。コマンドと、その使い分け |
+
+`SKILL.md` は毎回コンテキストに載るため、能力層に徹して薄く保つ。手順は該当する作業の
+ときだけ読ませる。形式規約は ai-workflows 側にある正典を指し、こちらには書き写さない
+（同じ規約を二箇所に持つとずれる）。
+
+ワークフローが ADO 以外の道具を主役にし、ADO が単なる入出力先になったら、その時点で
+別スキルに切り出す。
 
 ## Claude と GitHub Copilot の両方で動く
 
@@ -105,5 +123,5 @@ python3 ~/.claude/skills/azure-devops/scripts/ado.py wit describe-type --type "U
 取り消せない操作は意図的に外してある。該当する場面では URL を提示し、人間が判断する。
 
 レビュー時の差分取得も REST では行わない。ADS の REST が返すのは変更ファイルの一覧まで
-なので、行単位の差分はローカル clone に対する `git diff` で取る。手順は `SKILL.md` の
-「レビューする」を参照。
+なので、行単位の差分はローカル clone に対する `git diff` で取る。手順は
+`references/workflows/pr-review.md` を参照。
