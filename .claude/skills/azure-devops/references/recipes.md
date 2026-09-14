@@ -1,13 +1,13 @@
-# Recipes and troubleshooting
+# 実例とトラブルシュート
 
-Every command below is prefixed with `python3 scripts/ado.py`.
+以下のコマンドはすべて `python3 scripts/ado.py` を前置する。
 
 ## WIQL
 
-WIQL is SQL-like but restricted: no `JOIN`, no `SELECT *`, and the `SELECT` list decides which
-fields come back. Reference names, not display names, go in the query.
+WIQL は SQL に似ているが制約がある。`JOIN` は使えず、`SELECT *` も使えない。返る列は
+`SELECT` 句で決まる。クエリに書くのは表示名ではなく参照名。
 
-Work items assigned to the current user and not closed:
+自分に割り当てられた未クローズの作業アイテム:
 
 ```
 wit query --wiql "SELECT [System.Id], [System.Title], [System.State], [System.WorkItemType]
@@ -18,7 +18,7 @@ WHERE [System.TeamProject] = @project
 ORDER BY [System.ChangedDate] DESC"
 ```
 
-Everything in the current sprint:
+現在のスプリントの全作業アイテム:
 
 ```
 wit query --wiql "SELECT [System.Id], [System.Title], [System.State]
@@ -28,7 +28,7 @@ WHERE [System.TeamProject] = @project
 ORDER BY [System.Id]"
 ```
 
-Children of one work item (a one-hop link query; the client extracts the target ids):
+特定の作業アイテムの子（リンククエリ。クライアント側が対象 ID を抽出する）:
 
 ```
 wit query --wiql "SELECT [System.Id] FROM WorkItemLinks
@@ -37,20 +37,20 @@ WHERE [Source].[System.Id] = 1234
 MODE (MustContain)"
 ```
 
-Useful macros: `@me`, `@project`, `@today`, `@currentIteration`. Date arithmetic uses
-`@today - 7`.
+使えるマクロ: `@me`、`@project`、`@today`、`@currentIteration`。日付の計算は
+`@today - 7` と書く。
 
-Put long queries in a file and pass `--wiql @query.wiql` instead of quoting them inline.
+長いクエリはファイルに置いて `--wiql @query.wiql` を渡す。
 
-## Creating a User Story with acceptance criteria
+## 受け入れ基準つきのユーザーストーリーを作る
 
-Generate the field reference first, then write the HTML fields with `--field-multiline`:
+先にフィールド定義を生成し、HTML フィールドは `--field-multiline` で書き込む。
 
 ```
 wit describe-type --type "User Story" --save
 
 wit create --type "User Story" \
-  --title "Bulk-export invoices as CSV" \
+  --title "請求書を CSV で一括エクスポートできる" \
   --field-multiline "System.Description=@description.txt" \
   --field-multiline "Microsoft.VSTS.Common.AcceptanceCriteria=@criteria.txt" \
   --field "Microsoft.VSTS.Scheduling.StoryPoints=5" \
@@ -58,76 +58,76 @@ wit create --type "User Story" \
   --iteration "MyProject\\Sprint 42"
 ```
 
-`--field-multiline` escapes `<`, `>` and `&` and turns newlines into `<br>`. Pass real HTML
-through `--field` when you want markup preserved.
+`--field-multiline` は `<`、`>`、`&` をエスケープし、改行を `<br>` に変換する。マークアップ
+をそのまま入れたい場合は `--field` に生の HTML を渡す。
 
-Field names vary by type. Frequently useful reference names on the stock Agile template:
+フィールド名は型によって異なる。既定の Agile テンプレートでよく使う参照名:
 
-| Field | Reference name | Types |
+| フィールド | 参照名 | 対象の型 |
 | --- | --- | --- |
-| Description | `System.Description` | all |
-| Acceptance Criteria | `Microsoft.VSTS.Common.AcceptanceCriteria` | User Story |
-| Repro Steps | `Microsoft.VSTS.TCM.ReproSteps` | Bug |
+| Description | `System.Description` | すべて |
+| Acceptance Criteria（受け入れ基準） | `Microsoft.VSTS.Common.AcceptanceCriteria` | User Story |
+| Repro Steps（再現手順） | `Microsoft.VSTS.TCM.ReproSteps` | Bug |
 | System Info | `Microsoft.VSTS.TCM.SystemInfo` | Bug |
 | Story Points | `Microsoft.VSTS.Scheduling.StoryPoints` | User Story |
 | Effort | `Microsoft.VSTS.Scheduling.Effort` | Product Backlog Item |
 | Remaining Work | `Microsoft.VSTS.Scheduling.RemainingWork` | Task |
-| Priority | `Microsoft.VSTS.Common.Priority` | most |
-| Business Value | `Microsoft.VSTS.Common.BusinessValue` | Feature, Epic |
+| Priority | `Microsoft.VSTS.Common.Priority` | ほとんどの型 |
+| Business Value | `Microsoft.VSTS.Common.BusinessValue` | Feature、Epic |
 
-Treat this table as a hint for where to look, never as the answer. The generated file in
-`references/fields/` is the authority for this server.
+この表はあくまで当たりをつけるための目安で、答えではない。そのサーバでの正解は
+`references/fields/` に生成されたファイル。
 
-## Responding to pull request review comments
+## プルリクエストのレビューコメントに対応する
 
 ```
 pr threads 812 --repo billing-api --unresolved-only
 ```
 
-Each thread carries a `threadId`, the file path and line it is anchored to, and its comments.
-Reply into the thread the reviewer opened rather than starting a new one:
+各スレッドは `threadId`、紐づくファイルパスと行番号、コメント群を持つ。新しいスレッドを
+立てるのではなく、レビュアーが開いたスレッドに返信する。
 
 ```
-pr comment 812 --repo billing-api --thread 7 --text "Fixed in the latest push."
+pr comment 812 --repo billing-api --thread 7 --text "最新のプッシュで修正しました。"
 ```
 
-## Triaging a failed build
+## 失敗したビルドを調査する
 
 ```
 build list --result failed --top 5
 build logs 9271
 ```
 
-`build logs` without flags prints each failed step with the errors the agent recorded. Only
-when those are too vague:
+`build logs` はフラグなしで、失敗した各ステップとエージェントが記録したエラーを表示する。
+それでは判断がつかないときだけ:
 
 ```
 build logs 9271 --fetch --tail 300
 ```
 
-## Linking work to a pull request
+## 作業アイテムをプルリクエストに紐づける
 
 ```
 pr create --repo billing-api --source feature/csv-export --target main \
-  --title "Bulk CSV export" --description @pr-body.md --work-item 1234
+  --title "CSV 一括エクスポート" --description @pr-body.md --work-item 1234
 ```
 
-## Troubleshooting
+## トラブルシュート
 
-| Symptom | Cause |
+| 症状 | 原因 |
 | --- | --- |
-| `ADO_ORG_URL is not set` | The collection URL is missing. It ends with the collection name, e.g. `/tfs/DefaultCollection`, not the server root. |
-| HTTP 401, or an HTML sign-in page | PAT is wrong or expired, or basic-auth PATs are disabled on the server. |
-| HTTP 403 | PAT is valid but lacks the scope. Work item writes need *Work Items (read & write)*; pull request comments need *Code (read & write)*; build logs need *Build (read)*. |
-| HTTP 404 on a valid-looking path | Wrong project or collection, or the route needs a preview api-version. Retry with `request … --api-version-override 7.0-preview.3`. |
-| HTTP 400 naming an unknown field | The reference name does not exist on that work item type. Regenerate with `wit describe-type --save`. |
-| `CERTIFICATE_VERIFY_FAILED` | Point `ADO_CA_BUNDLE` at the internal CA bundle. `ADO_TLS_INSECURE=1` disables verification and is a last resort. |
-| Connection refused or a timeout to an internal host | `HTTPS_PROXY` is being applied to the internal server. Add the host to `NO_PROXY`. |
-| A comment posted but does not appear as a discussion entry | `wit comment` writes `System.History`, which renders in the work item's Discussion. Check the correct work item id. |
+| `ADO_ORG_URL is not set` | コレクション URL が未設定。サーバのルートではなく、`/tfs/DefaultCollection` のようにコレクション名まで含める。 |
+| HTTP 401、またはサインインの HTML ページが返る | PAT が誤っているか失効している。あるいはサーバ側で Basic 認証の PAT が無効化されている。 |
+| HTTP 403 | PAT は有効だがスコープが足りない。作業アイテムの書き込みには *Work Items (read & write)*、プルリクエストのコメントには *Code (read & write)*、ビルドログには *Build (read)* が要る。 |
+| 正しそうなパスで HTTP 404 | プロジェクトかコレクションが違うか、そのルートがプレビュー版の api-version を要求している。`request … --api-version-override 7.0-preview.3` で再試行する。 |
+| 存在しないフィールドを示す HTTP 400 | その参照名がその作業アイテム型に存在しない。`wit describe-type --save` で再生成する。 |
+| `CERTIFICATE_VERIFY_FAILED` | `ADO_CA_BUNDLE` に社内 CA のバンドルを指定する。`ADO_TLS_INSECURE=1` は検証を無効化する最終手段。 |
+| 社内ホストへの接続が拒否される、またはタイムアウトする | `HTTPS_PROXY` が社内サーバにも適用されている。そのホストを `NO_PROXY` に追加する。 |
+| コメントは通ったがディスカッションに出ない | `wit comment` は `System.History` に書き込み、作業アイテムのディスカッションに表示される。作業アイテムの ID を確認する。 |
 
-## API version
+## api-version
 
-Azure DevOps Server 2022 serves `api-version=7.0`, which every command uses by default. Work
-item comments are only reachable at `7.0-preview.3`; `wit comments` already accounts for that.
-Endpoints documented for `7.1` or later are not available on this server — use `7.0` or the
-matching preview.
+Azure DevOps Server 2022 が提供するのは `api-version=7.0` で、全コマンドが既定でこれを使う。
+作業アイテムのコメントだけは `7.0-preview.3` でしか取得できず、`wit comments` は内部で
+それを指定している。`7.1` 以降として文書化されているエンドポイントはこのサーバには存在
+しないため、`7.0` か対応するプレビュー版を使う。

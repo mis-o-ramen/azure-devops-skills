@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+
+# `wit describe-type --save` が生成するフィールド表。
+# サーバ名・プロジェクト名・社内のプロセステンプレート定義を含むため、コミットしない。
+.claude/skills/azure-devops/references/fields/*.md
+!.claude/skills/azure-devops/references/fields/README.md
