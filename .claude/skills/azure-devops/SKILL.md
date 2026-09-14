@@ -1,6 +1,6 @@
 ---
 name: azure-devops
-description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新、受け入れ基準など型ごとに異なるフィールドの取得、プルリクエストの参照とコメント、失敗したビルドパイプラインの調査。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。Use for work items, pull requests and builds on a self-hosted Azure DevOps / TFS server.
+description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新、受け入れ基準など型ごとに異なるフィールドの取得、プルリクエストの参照・レビュー・コメント、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、コードレビュー、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。Use for work items, pull requests and builds on a self-hosted Azure DevOps / TFS server.
 ---
 
 # Azure DevOps Server（オンプレミス）
@@ -91,6 +91,7 @@ wit comments 1234                         # ディスカッションを読む
 pr list --repo <repo> [--status active] [--target main]
 pr get <id> --repo <repo>
 pr threads <id> --repo <repo> [--unresolved-only]
+pr workitems <id> --repo <repo>           # 紐づく作業アイテムをフィールドごと取得
 pr comment <id> --repo <repo> --text "…" [--file path --line N] [--thread N]
 pr create --repo <repo> --source <branch> --target <branch> --title "…"
 ```
@@ -101,6 +102,53 @@ pr create --repo <repo> --source <branch> --target <branch> --title "…"
 
 プルリクエストの完了・破棄、投票、ブランチポリシーの上書きは意図的に実装していない。
 エージェント側から取り消せないため、プルリクエストの URL を提示して人間に判断を委ねる。
+
+### レビューする
+
+差分は REST では取得しない。ADS の REST が返すのは変更されたファイルの一覧までで、行単位
+のパッチは返らない。対象リポジトリのローカル clone で `git` を使う。
+
+1. 差分を取る。
+
+   ```
+   git fetch origin
+   git diff origin/<ターゲット>...origin/<ソース>
+   ```
+
+   ブランチ名は `pr get` の `sourceRefName` / `targetRefName` から `refs/heads/` を外した
+   もの。3 点の `...` はマージベース以降のソース側の変更だけを出す。
+
+2. その PR が何を実現するはずかを確認する。
+
+   ```
+   pr workitems <id> --repo <repo>
+   ```
+
+   紐づく作業アイテムがフィールドごと返る。受け入れ基準
+   （`Microsoft.VSTS.Common.AcceptanceCriteria`）と実装を突き合わせる。差分だけでは
+   「動くか」しか見られず、「求められたものか」は判断できない。
+
+3. 既に出ている指摘を読む。
+
+   ```
+   pr threads <id> --repo <repo> --unresolved-only
+   ```
+
+   他のレビュアーが指摘済みの内容を重ねて投稿しない。
+
+4. 指摘を投稿する。
+
+   ```
+   pr comment <id> --repo <repo> --file <パス> --line <N> --text "…"
+   ```
+
+   行番号は差分を取った時点のソースブランチを前提にする。投稿前に `pr get` の
+   `lastMergeSourceCommit` が `git rev-parse origin/<ソース>` と一致するか確かめる。
+   一致しなければ新しい push が入っており、行がずれる。
+
+インラインコメントは要点に絞る。気づいたことをすべて行コメントにすると、本当に直すべき
+箇所が埋もれる。設計や全体構成に関わる指摘は `--file` を付けず、トップレベルのスレッドに
+書く。
 
 ## ビルド
 
