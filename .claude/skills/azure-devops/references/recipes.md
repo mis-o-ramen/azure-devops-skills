@@ -44,24 +44,22 @@ MODE (MustContain)"
 
 ## 受け入れ基準つきのユーザーストーリーを作る
 
-先にフィールド定義を生成し、HTML フィールドは `--field-markdown` で書き込む。
+先にフィールド定義を生成し、HTML フィールドは `--field-multiline` で書き込む。
 
 ```
 wit describe-type --type "User Story" --save
 
 wit create --type "User Story" \
   --title "請求書を CSV で一括エクスポートできる" \
-  --field-markdown "System.Description=@description.md" \
-  --field-markdown "Microsoft.VSTS.Common.AcceptanceCriteria=@criteria.md" \
+  --field-multiline "System.Description=@description.txt" \
+  --field-multiline "Microsoft.VSTS.Common.AcceptanceCriteria=@criteria.txt" \
   --field "Microsoft.VSTS.Scheduling.StoryPoints=5" \
   --area "MyProject\\Billing" \
   --iteration "MyProject\\Sprint 42"
 ```
 
-`--field-markdown` は Markdown のうち見出し・箇条書き（入れ子を含む）・番号付きリスト・表・
-コードブロック・インラインコード・強調・リンク・引用・水平線を HTML に変換する。対応していない
-記法はエスケープされてそのまま残るため、崩れても本文は失われない。生の HTML を入れたい場合は
-`--field` に渡す。
+`--field-multiline` は `<`、`>`、`&` をエスケープし、改行を `<br>` に変換する。マークアップ
+をそのまま入れたい場合は `--field` に生の HTML を渡す。
 
 フィールド名は型によって異なる。既定の Agile テンプレートでよく使う参照名:
 

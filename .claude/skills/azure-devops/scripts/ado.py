@@ -21,7 +21,6 @@ import base64
 import html
 import json
 import os
-import re
 import ssl
 import sys
 import urllib.error
@@ -202,185 +201,29 @@ def split_assignment(raw):
     return name.strip(), read_value(value)
 
 
-# Markdown subset -> HTML, for fields whose data type is `html`.
-# Anything not listed here survives as escaped text: an unsupported construct
-# leaves its own markers visible rather than dropping the content.
-_MD_FENCE = re.compile(r"^\s*(```|~~~)\s*[\w+#.-]*\s*$")
-_MD_HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
-_MD_BULLET = re.compile(r"^(\s*)[-*+]\s+(.*)$")
-_MD_ORDERED = re.compile(r"^(\s*)\d+[.)]\s+(.*)$")
-_MD_QUOTE = re.compile(r"^\s*>\s?(.*)$")
-_MD_RULE = re.compile(r"^\s*([-*_])(?:\s*\1){2,}\s*$")
-_MD_TABLE_SEP = re.compile(r"^\s*\|?(?:\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?\s*$")
-_MD_CODE_SPAN = re.compile(r"`([^`]+)`")
-_MD_LINK = re.compile(r"\[([^\]]*)\]\(([^)\s]+)\)")
-_MD_BOLD = re.compile(r"\*\*(\S(?:.*?\S)?)\*\*|__(\S(?:.*?\S)?)__", re.S)
-_MD_EM = re.compile(r"(?<![\w*])\*(\S(?:[^*]*?\S)?)\*(?![\w*])"
-                    r"|(?<![\w_])_(\S(?:[^_]*?\S)?)_(?![\w_])")
-_MD_SAFE_URL = re.compile(r"^(?:https?:|mailto:|#|/)", re.I)
+def to_html(text):
+    """Plain text -> HTML for fields whose type is `html`."""
+    escaped = html.escape(text, quote=False)
+    return "<br>".join(escaped.split("\n"))
 
 
-def _md_link(match):
-    label, url = match.group(1), match.group(2)
-    if not _MD_SAFE_URL.match(url):
-        return match.group(0)  # unknown scheme: leave the literal text alone
-    return '<a href="{}">{}</a>'.format(url.replace('"', "&quot;"), label)
-
-
-def _md_inline(text):
-    """Escape, then apply inline markup. Escaping first keeps `<`/`&` literal."""
-    out = html.escape(text, quote=False)
-    spans = []
-
-    def stash(match):
-        spans.append(match.group(1))
-        return "\x00{}\x00".format(len(spans) - 1)
-
-    out = _MD_CODE_SPAN.sub(stash, out)  # code spans are exempt from the rest
-    out = _MD_LINK.sub(_md_link, out)
-    out = _MD_BOLD.sub(lambda m: "<strong>{}</strong>".format(m.group(1) or m.group(2)), out)
-    out = _MD_EM.sub(lambda m: "<em>{}</em>".format(m.group(1) or m.group(2)), out)
-    for index, code in enumerate(spans):
-        out = out.replace("\x00{}\x00".format(index), "<code>{}</code>".format(code))
-    return out
-
-
-def _md_cells(row):
-    row = row.strip()
-    if row.startswith("|"):
-        row = row[1:]
-    if row.endswith("|"):
-        row = row[:-1]
-    return [cell.strip() for cell in row.split("|")]
-
-
-def md_to_html(text):
-    """Markdown subset -> HTML for `type: html` fields and work item comments."""
-    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
-    out = []
-    stack = []  # open lists as (indent, tag); one <li> is open at the deepest level
-
-    def close_lists(indent=-1):
-        while stack and indent < stack[-1][0]:
-            out.append("</li></{}>".format(stack.pop()[1]))
-
-    def item(indent, tag, content):
-        close_lists(indent)
-        if not stack or indent > stack[-1][0]:
-            stack.append((indent, tag))
-            out.append("<{}>".format(tag))
-        else:
-            out.append("</li>")
-            if stack[-1][1] != tag:
-                out.append("</{}>".format(stack.pop()[1]))
-                stack.append((indent, tag))
-                out.append("<{}>".format(tag))
-        out.append("<li>{}".format(content))
-
-    index = 0
-    while index < len(lines):
-        line = lines[index]
-
-        if _MD_FENCE.match(line):
-            body = []
-            index += 1
-            while index < len(lines) and not _MD_FENCE.match(lines[index]):
-                body.append(lines[index])
-                index += 1
-            index += 1  # closing fence, or end of input
-            close_lists()
-            out.append("<pre><code>{}</code></pre>".format(
-                html.escape("\n".join(body), quote=False)))
-            continue
-
-        if not line.strip():
-            close_lists()
-            index += 1
-            continue
-
-        if _MD_RULE.match(line):
-            close_lists()
-            out.append("<hr>")
-            index += 1
-            continue
-
-        heading = _MD_HEADING.match(line)
-        if heading:
-            close_lists()
-            level = len(heading.group(1))
-            out.append("<h{0}>{1}</h{0}>".format(level, _md_inline(heading.group(2))))
-            index += 1
-            continue
-
-        if ("|" in line and index + 1 < len(lines)
-                and _MD_TABLE_SEP.match(lines[index + 1])):
-            close_lists()
-            head = _md_cells(line)
-            index += 2
-            rows = []
-            while index < len(lines) and "|" in lines[index] and lines[index].strip():
-                rows.append(_md_cells(lines[index]))
-                index += 1
-            out.append("<table><thead><tr>{}</tr></thead><tbody>".format(
-                "".join("<th>{}</th>".format(_md_inline(c)) for c in head)))
-            for row in rows:
-                out.append("<tr>{}</tr>".format(
-                    "".join("<td>{}</td>".format(_md_inline(c)) for c in row)))
-            out.append("</tbody></table>")
-            continue
-
-        bullet = _MD_BULLET.match(line)
-        ordered = None if bullet else _MD_ORDERED.match(line)
-        if bullet or ordered:
-            match = bullet or ordered
-            item(len(match.group(1).expandtabs(4)),
-                 "ul" if bullet else "ol", _md_inline(match.group(2)))
-            index += 1
-            continue
-
-        if _MD_QUOTE.match(line):
-            close_lists()
-            body = []
-            while index < len(lines) and _MD_QUOTE.match(lines[index]):
-                body.append(_md_inline(_MD_QUOTE.match(lines[index]).group(1)))
-                index += 1
-            out.append("<blockquote><p>{}</p></blockquote>".format("<br>".join(body)))
-            continue
-
-        # Paragraph: consecutive lines that start no other block.
-        body = []
-        while index < len(lines):
-            current = lines[index]
-            if (not current.strip() or _MD_FENCE.match(current) or _MD_RULE.match(current)
-                    or _MD_HEADING.match(current) or _MD_BULLET.match(current)
-                    or _MD_ORDERED.match(current) or _MD_QUOTE.match(current)):
-                break
-            body.append(_md_inline(current.strip()))
-            index += 1
-        close_lists()
-        out.append("<p>{}</p>".format("<br>".join(body)))
-
-    close_lists()
-    return "".join(out)
-
-
-def build_patch(field_args, markdown_args, shortcuts):
+def build_patch(field_args, multiline_args, shortcuts):
     ops = []
     seen = []
     for raw in field_args or []:
         name, value = split_assignment(raw)
         ops.append({"op": "add", "path": f"/fields/{name}", "value": value})
         seen.append(name)
-    for raw in markdown_args or []:
+    for raw in multiline_args or []:
         name, value = split_assignment(raw)
-        ops.append({"op": "add", "path": f"/fields/{name}", "value": md_to_html(value)})
+        ops.append({"op": "add", "path": f"/fields/{name}", "value": to_html(value)})
         seen.append(name)
     for name, value in shortcuts.items():
         if value is not None:
             ops.append({"op": "add", "path": f"/fields/{name}", "value": value})
             seen.append(name)
     if not ops:
-        raise AdoError("No fields given. Use --field / --field-markdown or a shortcut "
+        raise AdoError("No fields given. Use --field / --field-multiline or a shortcut "
                        "such as --title/--state/--assign.")
     return ops
 
@@ -457,8 +300,8 @@ def _describe_markdown(client, wit_type, project, rows, states):
         "",
         "## Fields",
         "",
-        "`type: html` fields take HTML. Write them with `--field-markdown`, which "
-        "converts a Markdown subset; plain text sent with `--field` loses its newlines.",
+        "`type: html` fields must be written with `--field-multiline` (or real HTML); "
+        "plain newlines are lost otherwise.",
         "",
         "| Display name | Reference name | Type | Required | Read-only | Allowed values |",
         "| --- | --- | --- | --- | --- | --- |",
@@ -569,7 +412,7 @@ def wit_query(client, args):
 
 
 def wit_create(client, args):
-    ops = build_patch(args.field, args.field_markdown, {
+    ops = build_patch(args.field, args.field_multiline, {
         "System.Title": args.title,
         "System.AssignedTo": args.assign,
         "System.AreaPath": args.area,
@@ -584,7 +427,7 @@ def wit_create(client, args):
 
 
 def wit_update(client, args):
-    ops = build_patch(args.field, args.field_markdown, {
+    ops = build_patch(args.field, args.field_multiline, {
         "System.Title": args.title,
         "System.State": args.state,
         "System.AssignedTo": args.assign,
@@ -599,7 +442,7 @@ def wit_update(client, args):
 def wit_comment(client, args):
     # System.History is the portable way to append a comment on ADS 2022.
     text = read_value(args.text)
-    ops = [{"op": "add", "path": "/fields/System.History", "value": md_to_html(text)}]
+    ops = [{"op": "add", "path": "/fields/System.History", "value": to_html(text)}]
     data = client.request("PATCH", f"/wit/workitems/{args.id}", collection_level=True,
                           body=ops, content_type=PATCH_CONTENT_TYPE)
     emit({"id": data.get("id"), "rev": data.get("rev"), "commented": True})
@@ -896,9 +739,8 @@ def _add_field_flags(parser):
     parser.add_argument("--field", action="append", metavar="REF=VALUE",
                         help="Set a field by reference name. Repeatable. "
                              "VALUE may be @path to read from a file.")
-    parser.add_argument("--field-markdown", "--field-multiline", action="append",
-                        dest="field_markdown", metavar="REF=VALUE",
-                        help="Same, but converts Markdown to HTML. Use for fields "
+    parser.add_argument("--field-multiline", action="append", metavar="REF=VALUE",
+                        help="Same, but converts plain text to HTML. Use for fields "
                              "whose type is `html` (Description, Acceptance Criteria, "
                              "Repro Steps).")
 
