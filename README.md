@@ -18,6 +18,10 @@
     │   └── research.md             # 調査して報告する
     ├── recipes.md            # WIQL の書き方、頻出フロー、トラブルシュート
     └── fields/               # 生成されるフィールド定義（コミットしない）
+
+tools/                        # スキル本体ではなく、スキルを検証するための道具
+├── check-html.py             # 書き込んだ HTML が読み戻せるかを確かめる
+└── markdown-fixture.md       # 基本記法を網羅したテキスト
 ```
 
 ## 能力と手順を分ける
@@ -114,6 +118,31 @@ python3 ~/.claude/skills/azure-devops/scripts/ado.py wit describe-type --type "U
 `references/fields/` に生成されるファイルには、サーバ URL・プロジェクト名・社内の
 プロセステンプレートの定義が含まれる。`.gitignore` で除外済みで、各実行環境のローカルに
 置いたままにする。プロセステンプレートを変更した後は再生成する。
+
+## HTML 変換を確認する
+
+`html` 型のフィールドに書き込んだ内容は、サーバのサニタイザが一部のタグを落とすことがある。
+何が残るかはプロセステンプレートとサーバのバージョンで変わるため、環境ごとに 1 度確かめる。
+`tools/` は実行環境で clone したこのリポジトリから直接使う（スキルのディレクトリには含めて
+いないため、シンボリックリンク先からは実行しない）。
+
+```sh
+python3 .claude/skills/azure-devops/scripts/ado.py wit create \
+  --type "User Story" --title "Markdown 変換の確認" \
+  --field-markdown "System.Description=@tools/markdown-fixture.md"
+
+python3 tools/check-html.py <作成された id>
+```
+
+送信した HTML と取得した HTML をタグ単位で突き合わせ、差分を表示する。完全一致なら終了
+コード 0、書き換えがあれば 1。落ちたタグがあれば、そのタグを使わない表現へ
+`scripts/ado.py` の変換器を変える。
+
+確認は次のときに繰り返す。
+
+- 新しいサーバ・新しいコレクションを使い始めたとき
+- プロセステンプレートを変更したとき
+- Azure DevOps Server を更新したとき
 
 ## 対応範囲
 

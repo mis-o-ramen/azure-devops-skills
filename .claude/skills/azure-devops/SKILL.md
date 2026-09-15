@@ -52,11 +52,15 @@ python3 scripts/ado.py wit types
 この表から 2 つの決まりが導かれる。
 
 - データ型が `html` のフィールド（`System.Description`、
-  `Microsoft.VSTS.Common.AcceptanceCriteria`、`Microsoft.VSTS.TCM.ReproSteps`）は、
-  素の改行が失われる。`--field-multiline` で書き込む（エスケープして改行を `<br>` に
-  変換する）。それ以外の型には `--field` を使う。
+  `Microsoft.VSTS.Common.AcceptanceCriteria`、`Microsoft.VSTS.TCM.ReproSteps`）は
+  HTML を受け取る。`--field-markdown` で書き込むと Markdown が HTML に変換される
+  （`--field` に素のテキストを渡すと改行が失われる）。それ以外の型には `--field` を使う。
 - `System.State` はその型に定義された State しか受け付けない。
   `New/Active/Resolved/Closed` だと決めつけない。
+
+読み出した `html` フィールドは HTML のまま返る。それをそのまま `--field-markdown` に渡すと
+タグが文字として二重に入る。更新するときは変更する部分だけを書くか、元の Markdown から
+書き直す。
 
 生成済みのファイルはプロセステンプレートの変更後に古くなる。存在しないフィールドを示す
 HTTP 400 で書き込みが失敗したら再生成する。
@@ -77,7 +81,7 @@ wit comment 1234 --text "…"               # コメントを追加
 wit comments 1234                         # ディスカッションを読む
 ```
 
-`--field`、`--field-multiline`、`--title`、`--text`、`--description`、`--wiql` は
+`--field`、`--field-markdown`、`--title`、`--text`、`--description`、`--wiql` は
 `@パス` を渡すとファイルから値を読む。長い文章や複数行はシェルのクォートと戦わずにこちらを
 使う。
 
