@@ -207,7 +207,7 @@ def to_html(text):
     return "<br>".join(escaped.split("\n"))
 
 
-def build_patch(field_args, multiline_args, shortcuts):
+def build_patch(field_args, multiline_args, shortcuts, require=True):
     ops = []
     seen = []
     for raw in field_args or []:
@@ -222,13 +222,55 @@ def build_patch(field_args, multiline_args, shortcuts):
         if value is not None:
             ops.append({"op": "add", "path": f"/fields/{name}", "value": value})
             seen.append(name)
-    if not ops:
+    if require and not ops:
         raise AdoError("No fields given. Use --field / --field-multiline or a shortcut "
                        "such as --title/--state/--assign.")
     return ops
 
 
 PATCH_CONTENT_TYPE = "application/json-patch+json"
+
+# Links are directed from the item being patched: a *parent* is the reverse end
+# of a hierarchy link. Only the parent direction is exposed here; every other
+# link type goes through `request`.
+PARENT_REL = "System.LinkTypes.Hierarchy-Reverse"
+
+
+def _work_item_url(client, work_item_id):
+    """The collection-level API url, which is the form relation values take."""
+    return f"{client.base_url}/_apis/wit/workItems/{work_item_id}"
+
+
+def _add_parent_op(client, parent_id):
+    return {"op": "add", "path": "/relations/-",
+            "value": {"rel": PARENT_REL, "url": _work_item_url(client, parent_id)}}
+
+
+def _relation_target_id(relation):
+    tail = (relation.get("url") or "").rstrip("/").rsplit("/", 1)[-1]
+    return int(tail) if tail.isdigit() else None
+
+
+def _parent_ops(client, work_item_id, parent_id):
+    """Ops that make `parent_id` the parent of an existing work item.
+
+    A work item holds at most one parent, so re-parenting has to drop the old
+    link in the same patch. `remove` addresses a relation by index, which is
+    only valid for the revision we read, hence the `test` on /rev: a concurrent
+    edit makes the patch fail instead of unlinking whatever moved into the slot.
+    Returns no ops when the link is already there.
+    """
+    data = client.request("GET", f"/wit/workitems/{work_item_id}",
+                          collection_level=True, query={"$expand": "relations"})
+    for index, relation in enumerate(data.get("relations") or []):
+        if relation.get("rel") != PARENT_REL:
+            continue
+        if _relation_target_id(relation) == parent_id:
+            return []
+        return [{"op": "test", "path": "/rev", "value": data.get("rev")},
+                {"op": "remove", "path": f"/relations/{index}"},
+                _add_parent_op(client, parent_id)]
+    return [_add_parent_op(client, parent_id)]
 
 
 # --------------------------------------------------------------------------
@@ -418,6 +460,8 @@ def wit_create(client, args):
         "System.AreaPath": args.area,
         "System.IterationPath": args.iteration,
     })
+    if args.parent is not None:
+        ops.append(_add_parent_op(client, args.parent))
     quoted = urllib.parse.quote(f"${args.type}", safe="")
     data = client.request("POST", f"/wit/workitems/{quoted}", body=ops,
                           content_type=PATCH_CONTENT_TYPE)
@@ -433,7 +477,13 @@ def wit_update(client, args):
         "System.AssignedTo": args.assign,
         "System.AreaPath": args.area,
         "System.IterationPath": args.iteration,
-    })
+    }, require=args.parent is None)
+    if args.parent is not None:
+        # Ahead of the field ops so the /rev test is the first thing evaluated.
+        ops = _parent_ops(client, args.id, args.parent) + ops
+    if not ops:
+        emit({"id": args.id, "parent": args.parent, "unchanged": True})
+        return
     data = client.request("PATCH", f"/wit/workitems/{args.id}", collection_level=True,
                           body=ops, content_type=PATCH_CONTENT_TYPE)
     emit({"id": data.get("id"), "rev": data.get("rev"), "fields": data.get("fields", {})})
@@ -789,6 +839,8 @@ def build_parser():
     p.add_argument("--assign", help="System.AssignedTo")
     p.add_argument("--area", help="System.AreaPath")
     p.add_argument("--iteration", help="System.IterationPath")
+    p.add_argument("--parent", type=int, metavar="ID",
+                   help="Create it as a child of this work item.")
     _add_field_flags(p)
     p.set_defaults(func=wit_create)
 
@@ -799,6 +851,8 @@ def build_parser():
     p.add_argument("--assign")
     p.add_argument("--area")
     p.add_argument("--iteration")
+    p.add_argument("--parent", type=int, metavar="ID",
+                   help="Make it a child of this work item, replacing any current parent.")
     _add_field_flags(p)
     p.set_defaults(func=wit_update)
 

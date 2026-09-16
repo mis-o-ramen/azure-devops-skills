@@ -81,6 +81,10 @@ wit comment 1234 --text "…"               # コメントを追加
 wit comments 1234                         # ディスカッションを読む
 ```
 
+`wit create` と `wit update` の `--parent <id>` で親子リンクを張る。作業アイテムは親を
+1 つしか持てないため、`wit update --parent` は既存の親を同じパッチで外して付け替える
+（既にその親なら何もしない）。親子以外のリンク（Related、Duplicate など）は `request` を使う。
+
 `--field`、`--field-multiline`、`--title`、`--text`、`--description`、`--wiql` は
 `@パス` を渡すとファイルから値を読む。長い文章や複数行はシェルのクォートと戦わずにこちらを
 使う。
