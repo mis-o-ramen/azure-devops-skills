@@ -1,6 +1,6 @@
 ---
 name: azure-devops
-description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新、受け入れ基準など型ごとに異なるフィールドの取得、プルリクエストの参照・レビュー・コメント・作成、レビュー指摘への対応、PR に紐づく作業アイテムの取得、作業アイテムからの実装、調査結果の報告、失敗したビルドパイプラインの調査。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、コードレビュー、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。Use for work items, pull requests and builds on a self-hosted Azure DevOps / TFS server.
+description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新、受け入れ基準など型ごとに異なるフィールドの取得、プルリクエストの参照・レビュー・コメント・作成、レビュー指摘への対応、PR に紐づく作業アイテムの取得、作業アイテムからの実装、アイデアや構想を実装可能な作業アイテムに落とし込む設計、調査結果の報告、失敗したビルドパイプラインの調査。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、コードレビュー、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。Use for work items, pull requests and builds on a self-hosted Azure DevOps / TFS server.
 ---
 
 # Azure DevOps Server（オンプレミス）
@@ -136,6 +136,7 @@ build logs <id> [--fetch] [--tail 200] [--log <logId>]
 | プルリクエストをレビューする | `references/workflows/pr-review.md` |
 | レビュー指摘に対応する | `references/workflows/pr-fix.md` |
 | 作業アイテムを実装する | `references/workflows/work-item-implement.md` |
+| アイデアを作業アイテムに落とす | `references/workflows/idea-to-work-item.md` |
 | 調査して報告する | `references/workflows/research.md` |
 
 報告の書き方は `references/workflows/writing.md` に共通で置いてある。各ファイルはそこに

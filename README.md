@@ -21,6 +21,7 @@
 │       │   ├── pr-review.md            # プルリクエストをレビューする
 │       │   ├── pr-fix.md               # レビュー指摘に対応する
 │       │   ├── work-item-implement.md  # 作業アイテムを実装する
+│       │   ├── idea-to-work-item.md    # アイデアを作業アイテムに落とす
 │       │   └── research.md             # 調査して報告する
 │       ├── recipes.md        # WIQL の書き方、頻出フロー、トラブルシュート
 │       └── fields/           # 生成されるフィールド定義（コミットしない）
