@@ -1,11 +1,30 @@
-# レビュー指摘に対応する
+---
+name: ado-fix
+description: Azure DevOps のプルリクエストに付いたレビュー指摘に対応し、同じブランチに修正を push して報告する修正工程。ユーザーが「指摘に対応して」「レビューコメントを直して」「指摘を捌いて」「レビューの修正をして」「PR の指摘対応」と言ったときに使う。指摘の分類（対応・見送り・判断保留）、優先度順の修正、テスト、push、対応報告までを行う。Address review feedback on an Azure DevOps pull request.
+---
+
+# 修正 — レビュー指摘に対応する
 
 プルリクエストに付いた指摘を読み、同じブランチに修正を push し、対応内容を報告するまでの
-手順。レビューする側は `pr-review.md`。
+手順。
+
+## この段の入口
+
+入口条件: **未解決の指摘があり、依頼者が直す側**（ループの定義は
+`../azure-devops/references/loop.md`）。条件が違う依頼は該当する段に渡す。
+
+- レビューする側 → `ado-review`
+- プルリクエストがまだ無い → 実装は `ado-implement`、設計は `ado-design`
+
+## 能力層
+
+Azure DevOps の操作（`pr …`）はすべて兄弟スキル `azure-devops` の `scripts/ado.py` を
+通す。コマンドの一覧は `../azure-devops/SKILL.md`。兄弟配置（同じ skills ディレクトリ
+直下）が前提。checkout・diff・commit・push は `git` CLI を使う。
 
 ## 出力規約
 
-書き方は `writing.md`。この手順固有の上限は次の 2 つ。
+書き方は `../azure-devops/references/writing.md`。この手順固有の上限は次の 2 つ。
 
 - 報告コメントは合計 20 行以内。読み手が見るのは「指摘が捌けたか」「まだ自分が決めることが
   残っているか」の 2 点だけ

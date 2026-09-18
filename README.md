@@ -1,48 +1,60 @@
 # azure-devops-skills
 
-オンプレミスの **Azure DevOps Server 2022** を使った開発のためのエージェントスキル。作業
-アイテム、プルリクエスト、ビルドパイプラインの操作を中心に、その周辺の手順を収めている。
+オンプレミスの **Azure DevOps Server 2022** を使った開発を、人間が承認点で監督する
+ループ（human-on-the-loop）として回すためのエージェントスキル。ループの定義は
+[`loop.md`](.claude/skills/azure-devops/references/loop.md) にあり、各スキルと手順は
+その段に仕える。実行時にスキルから参照できるよう、定義は能力層スキルの中に置いてある。
 
-| スキル | 何をするか |
-| --- | --- |
-| `azure-devops` | ADO の操作と、レビュー・実装・調査の手順 |
-| `coding-rules` | プロジェクトのコーディング規約を整備する |
+| スキル | ループでの位置 | 何をするか |
+| --- | --- | --- |
+| `ado-design` | 設計の段 | アイデアを、受け入れ基準まで埋まった作業アイテムに落とす |
+| `ado-implement` | 実装の段 | 作業アイテムを実装し、プルリクエストを作る |
+| `ado-review` | レビューの段 | プルリクエストをレビューし、優先度付きの指摘を投稿する |
+| `ado-fix` | 修正の段 | レビュー指摘に対応し、同じブランチに push する |
+| `azure-devops` | 能力層（段を持たない） | ADO の操作方法。REST クライアントと、調査などの支援手順 |
+| `coding-rules` | ループ外 | プロジェクトのコーディング規約を整備する |
 
 ## 構成
 
 ```
 .claude/skills/
-├── azure-devops/
-│   ├── SKILL.md              # エージェントが読み込むエントリポイント
+├── ado-design/SKILL.md       # 設計: アイデアを作業アイテムに落とす
+├── ado-implement/SKILL.md    # 実装: 作業アイテムを実装する
+├── ado-review/SKILL.md       # レビュー: プルリクエストをレビューする
+├── ado-fix/SKILL.md          # 修正: レビュー指摘に対応する
+├── azure-devops/             # 能力層。工程スキルはここを兄弟参照する
+│   ├── SKILL.md              # ADO の操作コマンドと、その使い分け
 │   ├── scripts/ado.py        # REST クライアント。Python 3 標準ライブラリのみ
 │   └── references/
-│       ├── workflows/        # 判断を伴う手順
-│       │   ├── writing.md              # 報告の書き方（全手順の共通規約）
-│       │   ├── pr-review.md            # プルリクエストをレビューする
-│       │   ├── pr-fix.md               # レビュー指摘に対応する
-│       │   ├── work-item-implement.md  # 作業アイテムを実装する
-│       │   └── research.md             # 調査して報告する
+│       ├── loop.md           # ループの定義。段・入口条件・成果物・人間の承認点
+│       ├── writing.md        # 報告の書き方（全工程の共通規約）
+│       ├── workflows/
+│       │   └── research.md   # 支援工程: 調査して報告する
 │       ├── recipes.md        # WIQL の書き方、頻出フロー、トラブルシュート
 │       └── fields/           # 生成されるフィールド定義（コミットしない）
 └── coding-rules/
     └── SKILL.md              # 規約の抽出手順と、埋める欄の定義
 ```
 
-## 能力と手順を分ける
+## 工程と能力を分ける
 
-肥大化を防ぐため、書くものの置き場所を層で分けている。
+スキルの境界は `loop.md` の段に従う。
 
 | 層 | 置き場所 | 何を書くか |
 | --- | --- | --- |
-| 手順 | `references/workflows/*.md` | 判断を伴う作業の進め方。その作業固有の優先度・出力規約・上限 |
-| 共通 | `references/workflows/writing.md` | 報告の書き方。各手順はここに固有の上限を足す |
-| 能力 | `SKILL.md` と `scripts/ado.py` | ADO を操作する方法。コマンドと、その使い分け |
+| 工程 | `ado-design` などの段スキル | その段の入口条件と手順。段固有の優先度・出力規約・上限 |
+| 共通 | `azure-devops/references/writing.md` | 報告の書き方。各段はここに固有の上限を足す |
+| 能力 | `azure-devops` の `SKILL.md` と `scripts/ado.py` | ADO を操作する方法。コマンドと、その使い分け |
 
-`SKILL.md` は毎回コンテキストに載るため、能力層に徹して薄く保つ。手順は該当する作業の
-ときだけ読ませる。ワークフローが 1 本増えても `SKILL.md` の増分は 1 行で済む。
+工程を語彙に持つのは段スキルの description だけにする。ユーザーの依頼は「設計したい」
+「実装に着手」といった工程の言葉で来るので、発火の語彙を工程側に寄せ、`azure-devops` は
+ADO の名詞（作業アイテム、PR、WIQL…）だけで発火する能力層に徹する。
 
-ワークフローが ADO 以外の道具を主役にし、ADO が単なる入出力先になったら、その時点で
-別スキルに切り出す。`coding-rules` は ADO を一切使わないため、この基準で独立している。
+段スキルは能力層を `../azure-devops/` の兄弟参照で使う。ディレクトリ名を変えたり、
+一部のスキルだけを配置したりすると、この参照が壊れる。
+
+ループの段に対応しない手順はこのリポジトリに置かない。`coding-rules` はループの外だが、
+実装の段が読む `CLAUDE.md` を整備する道具としてここに同居している。
 
 ## Claude と GitHub Copilot の両方で動く
 
@@ -73,7 +85,7 @@ git clone <このリポジトリ> ~/src/azure-devops-skills
 
 ```sh
 mkdir -p ~/.claude/skills ~/.copilot/skills
-for s in azure-devops coding-rules; do
+for s in azure-devops ado-design ado-implement ado-review ado-fix coding-rules; do
   ln -s ~/src/azure-devops-skills/.claude/skills/$s ~/.claude/skills/$s
   ln -s ~/src/azure-devops-skills/.claude/skills/$s ~/.copilot/skills/$s
 done
@@ -82,7 +94,8 @@ done
 **Windows（PowerShell）** — シンボリックリンクには開発者モードか管理者権限が要る。
 
 ```powershell
-foreach ($s in "azure-devops", "coding-rules") {
+foreach ($s in "azure-devops", "ado-design", "ado-implement", "ado-review", "ado-fix",
+               "coding-rules") {
   New-Item -ItemType SymbolicLink -Path "$HOME\.claude\skills\$s" `
            -Target "$HOME\src\azure-devops-skills\.claude\skills\$s"
 }
@@ -97,7 +110,9 @@ Copy-Item -Recurse -Force "$HOME\src\azure-devops-skills\.claude\skills\*" `
 ```
 
 ファイル単位のリンクやコピーにはしない。スクリプトは自身の位置を基準にフィールド定義を
-書き出すため、ディレクトリ構造が保たれている必要がある。
+書き出すため、ディレクトリ構造が保たれている必要がある。また、スキルは全部まとめて
+同じディレクトリに配置する。段スキル（`ado-*`）は能力層 `azure-devops` を兄弟参照する
+ため、一部だけ配置すると参照が壊れる。
 
 ### 3. 環境変数を設定する
 
@@ -121,6 +136,40 @@ python3 ~/.claude/skills/azure-devops/scripts/ado.py wit describe-type --type "U
 1 つ目で型の一覧が返れば、URL・PAT・TLS 信頼が通っている。2 つ目でそのサーバの実際の
 フィールド定義が `references/fields/` に生成される。扱う型ぶんを実行しておく。
 
+### 5. 実行時ゲートを設定する（推奨、Claude Code のみ）
+
+スキルの規約は散文なので、遵守は確率的になる。取り返しの利かない操作は、実行時に
+人間の確認を挟む permission 設定を重ねて決定論的に止める。`~/.claude/settings.json`
+（またはプロジェクトの `.claude/settings.json`）に追加する。
+
+```json
+{
+  "permissions": {
+    "ask": [
+      "Bash(* ado.py wit create *)",
+      "Bash(* ado.py wit set-state *)",
+      "Bash(* ado.py pr create *)",
+      "Bash(* ado.py request POST *)",
+      "Bash(* ado.py request PATCH *)",
+      "Bash(* ado.py request PUT *)",
+      "Bash(* ado.py request DELETE *)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)"
+    ]
+  }
+}
+```
+
+パターンの書式は Claude Code のバージョンで変わることがある。効いているかは
+`/permissions` で確認する。
+
+GitHub Copilot にはコマンド単位の確認機構が無いため、Copilot 実行を守るのは
+ツール側の設計（取り消せない操作の非実装、`pr create` の既定ドラフト）と、サーバ側の
+ブランチポリシーになる。ターゲットブランチへの直接 push の禁止は、エージェントの
+規約ではなくブランチポリシー（PR 必須）で強制する。
+
 ## 生成物はコミットしない
 
 `references/fields/` に生成されるファイルには、サーバ URL・プロジェクト名・社内の
@@ -140,4 +189,4 @@ python3 ~/.claude/skills/azure-devops/scripts/ado.py wit describe-type --type "U
 
 レビュー時の差分取得も REST では行わない。ADS の REST が返すのは変更ファイルの一覧まで
 なので、行単位の差分はローカル clone に対する `git diff` で取る。手順は
-`references/workflows/pr-review.md` を参照。
+`ado-review` スキルを参照。

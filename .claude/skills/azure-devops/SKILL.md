@@ -1,6 +1,6 @@
 ---
 name: azure-devops
-description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新、受け入れ基準など型ごとに異なるフィールドの取得、プルリクエストの参照・レビュー・コメント・作成、レビュー指摘への対応、PR に紐づく作業アイテムの取得、作業アイテムからの実装、調査結果の報告、失敗したビルドパイプラインの調査。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、コードレビュー、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。Use for work items, pull requests and builds on a self-hosted Azure DevOps / TFS server.
+description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する能力層。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新・コメント、受け入れ基準など型ごとに異なるフィールドと State の取得、プルリクエストの参照・スレッド・コメント・作成、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査、調査結果の報告。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。設計・実装・レビュー・指摘対応の各工程は兄弟スキル ado-design / ado-implement / ado-review / ado-fix が持ち、いずれもこのスキルを能力層として使う。Operate a self-hosted Azure DevOps / TFS server; the process stages live in the sibling ado-* skills.
 ---
 
 # Azure DevOps Server（オンプレミス）
@@ -76,7 +76,8 @@ wit describe-type --type "Bug" --save     # フィールド・State・許可値
 wit query --wiql "SELECT …"               # WIQL 検索。ID 解決とフィールド取得まで一度に行う
 wit get 1234 5678 [--relations]           # ID 指定で全フィールドを取得
 wit create --type "User Story" --title …  # 作成
-wit update 1234 --state Active            # 更新
+wit update 1234 --assign "…"              # 更新（State 以外のフィールド）
+wit set-state 1234 Active                 # State の変更。人間の明示の指示があるときだけ
 wit comment 1234 --text "…"               # コメントを追加
 wit comments 1234                         # ディスカッションを読む
 ```
@@ -101,8 +102,11 @@ pr get <id> --repo <repo>
 pr threads <id> --repo <repo> [--unresolved-only]
 pr workitems <id> --repo <repo>           # 紐づく作業アイテムをフィールドごと取得
 pr comment <id> --repo <repo> --text "…" [--file path --line N] [--thread N]
-pr create --repo <repo> --source <branch> --target <branch> --title "…"
+pr create --repo <repo> --source <branch> --target <branch> --title "…" [--publish]
 ```
+
+`pr create` は既定で**ドラフト**として作る。公開はレビュアーへの通知を伴い、ここからは
+取り消せないため、`--publish` を付けるのは本文の承認を得たときだけ。
 
 `--thread` は既存スレッドへの返信、`--file`/`--line` は差分の行に紐づく新規スレッド、
 どちらも指定しなければトップレベルの新規スレッドになる。ブランチ名の `refs/heads/` は
@@ -127,19 +131,25 @@ build logs <id> [--fetch] [--tail 200] [--log <logId>]
 
 ビルドの実行トリガはスコープ外。
 
-## 判断を伴う作業
+## 工程の作業はこのスキルでは進めない
 
-次の作業は、コマンドを並べるだけでは決まらない判断を含む。着手する前に該当するファイルを読む。
+このスキルは操作の方法（能力層）だけを持つ。開発ループの段にあたる依頼は、兄弟スキル
+（同じ skills ディレクトリ直下）に手順がある。該当したらそちらを読んでから進める。
 
-| 依頼 | 読むファイル |
+| 依頼 | スキル |
 | --- | --- |
-| プルリクエストをレビューする | `references/workflows/pr-review.md` |
-| レビュー指摘に対応する | `references/workflows/pr-fix.md` |
-| 作業アイテムを実装する | `references/workflows/work-item-implement.md` |
-| 調査して報告する | `references/workflows/research.md` |
+| アイデアを作業アイテムに落とす（設計） | `ado-design` |
+| 作業アイテムを実装する | `ado-implement` |
+| プルリクエストをレビューする | `ado-review` |
+| レビュー指摘に対応する | `ado-fix` |
 
-報告の書き方は `references/workflows/writing.md` に共通で置いてある。各ファイルはそこに
-固有の上限を足す。
+段の定義と、どの段にいるかの判定は `references/loop.md` にある。
+
+調査して報告する依頼は工程ではなく支援作業で、手順は
+`references/workflows/research.md` に置いてある。
+
+報告の書き方は `references/writing.md` に共通で置いてある。各手順はそこに固有の上限を
+足す。
 
 ## それ以外の操作
 
@@ -154,8 +164,14 @@ python3 scripts/ado.py request POST /wit/wiql --data @query.json
 パスは `_apis` からの相対。`--collection-level` でプロジェクト部分を外し、
 プレビュー版が必要なルートには `--api-version-override` を使う。
 
+GET 以外の `request` は、実装済みコマンドが意図的に外している操作（プルリクエストの
+完了・破棄・投票など）にも到達できる。書き込みの `request` は、目的の操作を示して
+人間の承認を得てから使う。
+
 ## 参照
 
-- `references/workflows/` — 判断を伴う手順。該当する作業のときに読む
+- `references/loop.md` — 開発ループの定義。段・入口条件・成果物・人間の承認点
+- `references/writing.md` — 報告の書き方と、投稿先ごとの制約
+- `references/workflows/research.md` — 調査して報告する手順
 - `references/recipes.md` — WIQL の書き方、頻出フロー、トラブルシュート
 - `references/fields/` — 生成されたプロジェクト×型ごとのフィールド定義

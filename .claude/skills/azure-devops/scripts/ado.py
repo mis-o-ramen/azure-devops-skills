@@ -224,7 +224,7 @@ def build_patch(field_args, multiline_args, shortcuts, require=True):
             seen.append(name)
     if require and not ops:
         raise AdoError("No fields given. Use --field / --field-multiline or a shortcut "
-                       "such as --title/--state/--assign.")
+                       "such as --title/--assign (for System.State use 'wit set-state').")
     return ops
 
 
@@ -473,7 +473,6 @@ def wit_create(client, args):
 def wit_update(client, args):
     ops = build_patch(args.field, args.field_multiline, {
         "System.Title": args.title,
-        "System.State": args.state,
         "System.AssignedTo": args.assign,
         "System.AreaPath": args.area,
         "System.IterationPath": args.iteration,
@@ -487,6 +486,16 @@ def wit_update(client, args):
     data = client.request("PATCH", f"/wit/workitems/{args.id}", collection_level=True,
                           body=ops, content_type=PATCH_CONTENT_TYPE)
     emit({"id": data.get("id"), "rev": data.get("rev"), "fields": data.get("fields", {})})
+
+
+def wit_set_state(client, args):
+    # A separate subcommand, not an option of `update`, so command-level permission
+    # rules can single it out.
+    ops = [{"op": "add", "path": "/fields/System.State", "value": args.state}]
+    data = client.request("PATCH", f"/wit/workitems/{args.id}", collection_level=True,
+                          body=ops, content_type=PATCH_CONTENT_TYPE)
+    emit({"id": data.get("id"), "rev": data.get("rev"),
+          "state": (data.get("fields") or {}).get("System.State")})
 
 
 def wit_comment(client, args):
@@ -645,7 +654,9 @@ def pr_create(client, args):
         "targetRefName": _ref(args.target),
         "title": args.title,
         "description": read_value(args.description) if args.description else "",
-        "isDraft": bool(args.draft),
+        # Draft by default: publishing notifies reviewers and cannot be taken back
+        # from here, so it takes an explicit --publish.
+        "isDraft": not args.publish,
     }
     if args.reviewer:
         body["reviewers"] = [{"id": r} for r in args.reviewer]
@@ -844,10 +855,9 @@ def build_parser():
     _add_field_flags(p)
     p.set_defaults(func=wit_create)
 
-    p = wit.add_parser("update", help="Update a work item.")
+    p = wit.add_parser("update", help="Update a work item (fields other than System.State).")
     p.add_argument("id", type=int)
     p.add_argument("--title")
-    p.add_argument("--state", help="System.State (values differ per type; check describe-type)")
     p.add_argument("--assign")
     p.add_argument("--area")
     p.add_argument("--iteration")
@@ -855,6 +865,13 @@ def build_parser():
                    help="Make it a child of this work item, replacing any current parent.")
     _add_field_flags(p)
     p.set_defaults(func=wit_update)
+
+    p = wit.add_parser("set-state",
+                       help="Change System.State. Separate from 'update' so permission "
+                            "rules can gate it.")
+    p.add_argument("id", type=int)
+    p.add_argument("state", help="A state valid for the type; check describe-type.")
+    p.set_defaults(func=wit_set_state)
 
     p = wit.add_parser("comment", help="Append a comment (via System.History).")
     p.add_argument("id", type=int)
@@ -913,7 +930,9 @@ def build_parser():
     p.add_argument("--target", required=True)
     p.add_argument("--title", required=True)
     p.add_argument("--description", help="Body text, or @path to a file.")
-    p.add_argument("--draft", action="store_true")
+    p.add_argument("--publish", action="store_true",
+                   help="Create as a published PR. Default is a draft; publishing "
+                        "notifies reviewers, so it needs prior approval.")
     p.add_argument("--reviewer", action="append", help="Reviewer identity id. Repeatable.")
     p.add_argument("--work-item", action="append", type=int, help="Work item id to link.")
     p.set_defaults(func=pr_create)

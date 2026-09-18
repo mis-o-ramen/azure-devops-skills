@@ -1,6 +1,7 @@
 # 実例とトラブルシュート
 
-以下のコマンドはすべて `python3 scripts/ado.py` を前置する。
+以下のコマンドはすべて `python3 scripts/ado.py` を前置する。このファイル内のパスは
+スキル `azure-devops` のディレクトリからの相対。
 
 ## WIQL
 
