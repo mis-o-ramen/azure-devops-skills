@@ -101,7 +101,7 @@ pr get <id> --repo <repo>
 pr threads <id> --repo <repo> [--unresolved-only]
 pr workitems <id> --repo <repo>           # 紐づく作業アイテムをフィールドごと取得
 pr comment <id> --repo <repo> --text "…" [--file path --line N] [--thread N]
-pr create --repo <repo> --source <branch> --target <branch> --title "…"
+pr create --repo <repo> --source <branch> --target <branch> --title "…" [--draft]
 ```
 
 `--thread` は既存スレッドへの返信、`--file`/`--line` は差分の行に紐づく新規スレッド、
