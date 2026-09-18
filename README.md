@@ -28,6 +28,7 @@
 │   └── references/
 │       ├── loop.md           # ループの定義。段・入口条件・成果物・人間の承認点
 │       ├── writing.md        # 報告の書き方（全工程の共通規約）
+│       ├── git.md            # ブランチ名とコミットメッセージの規約（実装・修正の段）
 │       ├── workflows/
 │       │   └── research.md   # 支援工程: 調査して報告する
 │       ├── recipes.md        # WIQL の書き方、頻出フロー、トラブルシュート
@@ -44,6 +45,7 @@
 | --- | --- | --- |
 | 工程 | `ado-design` などの段スキル | その段の入口条件と手順。段固有の優先度・出力規約・上限 |
 | 共通 | `azure-devops/references/writing.md` | 報告の書き方。各段はここに固有の上限を足す |
+| 共通 | `azure-devops/references/git.md` | ブランチ名とコミットメッセージの規約。対象リポジトリの規約が優先 |
 | 能力 | `azure-devops` の `SKILL.md` と `scripts/ado.py` | ADO を操作する方法。コマンドと、その使い分け |
 
 工程を語彙に持つのは段スキルの description だけにする。ユーザーの依頼は「設計したい」

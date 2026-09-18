@@ -20,7 +20,8 @@ description: Azure DevOps のプルリクエストに付いたレビュー指摘
 
 Azure DevOps の操作（`pr …`）はすべて兄弟スキル `azure-devops` の `scripts/ado.py` を
 通す。コマンドの一覧は `../azure-devops/SKILL.md`。兄弟配置（同じ skills ディレクトリ
-直下）が前提。checkout・diff・commit・push は `git` CLI を使う。
+直下）が前提。checkout・diff・commit・push は `git` CLI を使う。コミットメッセージの
+規約は `../azure-devops/references/git.md`。
 
 ## 出力規約
 
@@ -100,6 +101,9 @@ P0 → P1 → P2 の順に着手する。途中で打ち切られても P0 が�
 git commit …
 git push origin HEAD
 ```
+
+コミットメッセージの書式は `../azure-devops/references/git.md`。指摘対応であることは
+type にしない。直した内容で type を決める。
 
 新しいブランチを作らない。force push しない。ターゲットブランチへ直接 push しない。
 
