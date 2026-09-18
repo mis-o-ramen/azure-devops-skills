@@ -1,6 +1,6 @@
 ---
 name: azure-devops
-description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新、受け入れ基準など型ごとに異なるフィールドの取得、プルリクエストの参照・レビュー・コメント・作成、レビュー指摘への対応、PR に紐づく作業アイテムの取得、作業アイテムからの実装、アイデアや構想を実装可能な作業アイテムに落とし込む設計、調査結果の報告、失敗したビルドパイプラインの調査。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、コードレビュー、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。Use for work items, pull requests and builds on a self-hosted Azure DevOps / TFS server.
+description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する能力層。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新・コメント、受け入れ基準など型ごとに異なるフィールドと State の取得、プルリクエストの参照・スレッド・コメント・作成、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査、調査結果の報告。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。設計・実装・レビュー・指摘対応の各工程は兄弟スキル ado-design / ado-implement / ado-review / ado-fix が持ち、いずれもこのスキルを能力層として使う。Operate a self-hosted Azure DevOps / TFS server; the process stages live in the sibling ado-* skills.
 ---
 
 # Azure DevOps Server（オンプレミス）
@@ -127,20 +127,25 @@ build logs <id> [--fetch] [--tail 200] [--log <logId>]
 
 ビルドの実行トリガはスコープ外。
 
-## 判断を伴う作業
+## 工程の作業はこのスキルでは進めない
 
-次の作業は、コマンドを並べるだけでは決まらない判断を含む。着手する前に該当するファイルを読む。
+このスキルは操作の方法（能力層）だけを持つ。開発ループの段にあたる依頼は、兄弟スキル
+（同じ skills ディレクトリ直下）に手順がある。該当したらそちらを読んでから進める。
 
-| 依頼 | 読むファイル |
+| 依頼 | スキル |
 | --- | --- |
-| プルリクエストをレビューする | `references/workflows/pr-review.md` |
-| レビュー指摘に対応する | `references/workflows/pr-fix.md` |
-| 作業アイテムを実装する | `references/workflows/work-item-implement.md` |
-| アイデアを作業アイテムに落とす | `references/workflows/idea-to-work-item.md` |
-| 調査して報告する | `references/workflows/research.md` |
+| アイデアを作業アイテムに落とす（設計） | `ado-design` |
+| 作業アイテムを実装する | `ado-implement` |
+| プルリクエストをレビューする | `ado-review` |
+| レビュー指摘に対応する | `ado-fix` |
 
-報告の書き方は `references/workflows/writing.md` に共通で置いてある。各ファイルはそこに
-固有の上限を足す。
+段の定義と、どの段にいるかの判定はリポジトリの `LOOP.md` にある。
+
+調査して報告する依頼は工程ではなく支援作業で、手順は
+`references/workflows/research.md` に置いてある。
+
+報告の書き方は `references/writing.md` に共通で置いてある。各手順はそこに固有の上限を
+足す。
 
 ## それ以外の操作
 
@@ -157,6 +162,7 @@ python3 scripts/ado.py request POST /wit/wiql --data @query.json
 
 ## 参照
 
-- `references/workflows/` — 判断を伴う手順。該当する作業のときに読む
+- `references/writing.md` — 報告の書き方と、投稿先ごとの制約
+- `references/workflows/research.md` — 調査して報告する手順
 - `references/recipes.md` — WIQL の書き方、頻出フロー、トラブルシュート
 - `references/fields/` — 生成されたプロジェクト×型ごとのフィールド定義

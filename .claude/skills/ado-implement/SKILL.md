@@ -1,10 +1,33 @@
-# 作業アイテムを実装する
+---
+name: ado-implement
+description: Azure DevOps の作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）を実装し、プルリクエストを作るまでの実装工程。ユーザーが「実装したい」「実装に着手」「着手して」「この作業アイテムをやって」「2251 を実装して」のように言ったときに使う。数字だけの名前のファイル（2251.md など）や裸の数字は作業アイテム ID を指す設計メモであることが多く、その実装依頼もこの工程。受け入れ基準の確認、基準ごとのテストの割り振り、最小の実装、プルリクエスト作成、作業アイテムへの報告までを行う。Implement an Azure DevOps work item through to a pull request.
+---
+
+# 実装 — 作業アイテムを実装する
 
 作業アイテムを読み、実装し、プルリクエストを作るまでの手順。
 
+## この段の入口
+
+入口条件: **受け入れ基準の埋まった作業アイテムがあり、プルリクエストが無い**
+（ループの定義はリポジトリの `LOOP.md`）。条件が違う依頼は該当する段に渡す。
+
+- 作業アイテムが無い、または受け入れ基準を書き起こすところから → `ado-design`
+- プルリクエストのレビュー → `ado-review`、レビュー指摘への対応 → `ado-fix`
+
+依頼の中の数字だけのファイル名（`2251.md` など）や裸の数字は作業アイテム ID である
+ことがある。`wit get` で引き当ててから始める。
+
+## 能力層
+
+Azure DevOps の操作（`wit …` / `pr …` / `build …`）はすべて兄弟スキル `azure-devops` の
+`scripts/ado.py` を通す。コマンドの一覧・セットアップ・フィールドの調べ方は
+`../azure-devops/SKILL.md`。兄弟配置（同じ skills ディレクトリ直下）が前提。
+Git 操作（clone / diff / branch / commit / push）は `git` CLI を使う。
+
 ## 出力規約
 
-書き方は `writing.md`。この手順固有の上限は次の 3 つ。
+書き方は `../azure-devops/references/writing.md`。この手順固有の上限は次の 3 つ。
 
 - 説明の**見出し**はリポジトリの PR テンプレートに合わせる。足さない・改名しない
   （`.azuredevops/pull_request_template.md` / `.github/pull_request_template.md`）。
@@ -22,7 +45,7 @@ wit comments <id>
 ```
 
 受け入れ基準のフィールドは型ごとに違う。参照名を推測せず `wit describe-type` で確認する
-（`../../SKILL.md` の「最初にフィールドを調べる」）。ユーザーストーリーなら
+（`../azure-devops/SKILL.md` の「最初にフィールドを調べる」）。ユーザーストーリーなら
 `Microsoft.VSTS.Common.AcceptanceCriteria`、バグなら `Microsoft.VSTS.TCM.ReproSteps` に
 条件が入っていることが多い。
 
