@@ -139,7 +139,7 @@ build logs <id> [--fetch] [--tail 200] [--log <logId>]
 | プルリクエストをレビューする | `ado-review` |
 | レビュー指摘に対応する | `ado-fix` |
 
-段の定義と、どの段にいるかの判定はリポジトリの `LOOP.md` にある。
+段の定義と、どの段にいるかの判定は `references/loop.md` にある。
 
 調査して報告する依頼は工程ではなく支援作業で、手順は
 `references/workflows/research.md` に置いてある。
@@ -162,6 +162,7 @@ python3 scripts/ado.py request POST /wit/wiql --data @query.json
 
 ## 参照
 
+- `references/loop.md` — 開発ループの定義。段・入口条件・成果物・人間の承認点
 - `references/writing.md` — 報告の書き方と、投稿先ごとの制約
 - `references/workflows/research.md` — 調査して報告する手順
 - `references/recipes.md` — WIQL の書き方、頻出フロー、トラブルシュート
