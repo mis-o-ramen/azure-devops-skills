@@ -119,12 +119,13 @@ wit comments <id>
   欠けたまま作らない。進められない理由があるなら、プルリクエストを作らずに
   `wit comment` で報告して止まる
 - **本文の承認** — タイトル・説明・ソース / ターゲットブランチを依頼者に提示し、
-  承認を得る。承認を得られない非対話の実行では、`--draft` を付けてドラフトとして
-  作り、公開の判断を人間に残す
+  承認を得る。`pr create` は既定でドラフトを作るので、`--publish` を付けるのは
+  承認を得たときだけ。承認を得られない非対話の実行では既定のまま（ドラフト）作り、
+  公開の判断を人間に残す
 
 ```
 pr create --repo <repo> --source ai/wi-<id> --target <ターゲット> \
-  --title "…" --description @body.md --work-item <id>
+  --title "…" --description @body.md --work-item <id> --publish
 ```
 
 `--work-item` で作業アイテムに紐づける。紐づいていればレビュー側が `pr workitems` で受け入れ

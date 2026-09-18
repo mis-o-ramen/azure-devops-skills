@@ -136,6 +136,40 @@ python3 ~/.claude/skills/azure-devops/scripts/ado.py wit describe-type --type "U
 1 つ目で型の一覧が返れば、URL・PAT・TLS 信頼が通っている。2 つ目でそのサーバの実際の
 フィールド定義が `references/fields/` に生成される。扱う型ぶんを実行しておく。
 
+### 5. 実行時ゲートを設定する（推奨、Claude Code のみ）
+
+スキルの規約は散文なので、遵守は確率的になる。取り返しの利かない操作は、実行時に
+人間の確認を挟む permission 設定を重ねて決定論的に止める。`~/.claude/settings.json`
+（またはプロジェクトの `.claude/settings.json`）に追加する。
+
+```json
+{
+  "permissions": {
+    "ask": [
+      "Bash(* ado.py wit create *)",
+      "Bash(* ado.py wit set-state *)",
+      "Bash(* ado.py pr create *)",
+      "Bash(* ado.py request POST *)",
+      "Bash(* ado.py request PATCH *)",
+      "Bash(* ado.py request PUT *)",
+      "Bash(* ado.py request DELETE *)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)"
+    ]
+  }
+}
+```
+
+パターンの書式は Claude Code のバージョンで変わることがある。効いているかは
+`/permissions` で確認する。
+
+GitHub Copilot にはコマンド単位の確認機構が無いため、Copilot 実行を守るのは
+ツール側の設計（取り消せない操作の非実装、`pr create` の既定ドラフト）と、サーバ側の
+ブランチポリシーになる。ターゲットブランチへの直接 push の禁止は、エージェントの
+規約ではなくブランチポリシー（PR 必須）で強制する。
+
 ## 生成物はコミットしない
 
 `references/fields/` に生成されるファイルには、サーバ URL・プロジェクト名・社内の

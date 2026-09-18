@@ -76,7 +76,8 @@ wit describe-type --type "Bug" --save     # フィールド・State・許可値
 wit query --wiql "SELECT …"               # WIQL 検索。ID 解決とフィールド取得まで一度に行う
 wit get 1234 5678 [--relations]           # ID 指定で全フィールドを取得
 wit create --type "User Story" --title …  # 作成
-wit update 1234 --state Active            # 更新
+wit update 1234 --assign "…"              # 更新（State 以外のフィールド）
+wit set-state 1234 Active                 # State の変更。人間の明示の指示があるときだけ
 wit comment 1234 --text "…"               # コメントを追加
 wit comments 1234                         # ディスカッションを読む
 ```
@@ -101,8 +102,11 @@ pr get <id> --repo <repo>
 pr threads <id> --repo <repo> [--unresolved-only]
 pr workitems <id> --repo <repo>           # 紐づく作業アイテムをフィールドごと取得
 pr comment <id> --repo <repo> --text "…" [--file path --line N] [--thread N]
-pr create --repo <repo> --source <branch> --target <branch> --title "…" [--draft]
+pr create --repo <repo> --source <branch> --target <branch> --title "…" [--publish]
 ```
+
+`pr create` は既定で**ドラフト**として作る。公開はレビュアーへの通知を伴い、ここからは
+取り消せないため、`--publish` を付けるのは本文の承認を得たときだけ。
 
 `--thread` は既存スレッドへの返信、`--file`/`--line` は差分の行に紐づく新規スレッド、
 どちらも指定しなければトップレベルの新規スレッドになる。ブランチ名の `refs/heads/` は
@@ -159,6 +163,10 @@ python3 scripts/ado.py request POST /wit/wiql --data @query.json
 
 パスは `_apis` からの相対。`--collection-level` でプロジェクト部分を外し、
 プレビュー版が必要なルートには `--api-version-override` を使う。
+
+GET 以外の `request` は、実装済みコマンドが意図的に外している操作（プルリクエストの
+完了・破棄・投票など）にも到達できる。書き込みの `request` は、目的の操作を示して
+人間の承認を得てから使う。
 
 ## 参照
 
