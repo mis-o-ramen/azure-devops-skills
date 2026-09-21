@@ -1,49 +1,58 @@
 # azure-devops-skills
 
 オンプレミスの **Azure DevOps Server 2022** を使った開発を、人間が承認点で監督する
-ループ（human-on-the-loop）として回すためのエージェントスキル。ループの定義は
-[`loop.md`](.claude/skills/azure-devops/references/loop.md) にあり、各スキルと手順は
-その段に仕える。実行時にスキルから参照できるよう、定義は能力層スキルの中に置いてある。
+ループ（human-on-the-loop）として回すためのエージェントスキル。このリポジトリは
+HOTL ループの **Azure DevOps 手足**で、持つのは ADO 固有の部分だけ。
+ループの定義・工程手順の骨格・出力規約の正典はコアリポジトリ
+[hotl-core](https://github.com/mis-o-ramen/hotl-core) にあり、**ここにはコピーを
+置かない** — hotl-core を並べて clone し、両方のスキルを同じディレクトリに symlink で
+束ねて使う（導入手順を参照）。ADO への対応づけは
+[`loop.md`](.claude/skills/azure-devops/references/loop.md) が持つ。
 
 | スキル | ループでの位置 | 何をするか |
 | --- | --- | --- |
-| `ado-design` | 設計の段 | アイデアを、受け入れ基準まで埋まった作業アイテムに落とす |
+| `ado-design` | 設計の段 | 骨格を ADO に対応づけ、受け入れ基準まで埋まった作業アイテムを作る |
 | `ado-implement` | 実装の段 | 作業アイテムを実装し、プルリクエストを作る |
 | `ado-review` | レビューの段 | プルリクエストをレビューし、優先度付きの指摘を投稿する |
 | `ado-fix` | 修正の段 | レビュー指摘に対応し、同じブランチに push する |
 | `azure-devops` | 能力層（段を持たない） | ADO の操作方法。REST クライアントと、調査などの支援手順 |
+| `hotl-loop` ほか | コア（hotl-core 側） | ループの定義・段ごとの手順骨格・出力規約 3 スキル |
 | `coding-rules` | ループ外 | プロジェクトのコーディング規約を整備する |
 
 ## 構成
 
 ```
 .claude/skills/
-├── ado-design/SKILL.md       # 設計: アイデアを作業アイテムに落とす
-├── ado-implement/SKILL.md    # 実装: 作業アイテムを実装する
-├── ado-review/SKILL.md       # レビュー: プルリクエストをレビューする
-├── ado-fix/SKILL.md          # 修正: レビュー指摘に対応する
+├── ado-design/SKILL.md       # 設計: 骨格 (hotl-loop) の ADO への対応づけ
+├── ado-implement/SKILL.md    # 実装: 同上 (wit get、pr create のドラフト既定…)
+├── ado-review/SKILL.md       # レビュー: 同上 (ローカル clone の git diff、行アンカー検証…)
+├── ado-fix/SKILL.md          # 修正: 同上 (pr threads、同一ブランチ push…)
 ├── azure-devops/             # 能力層。工程スキルはここを兄弟参照する
 │   ├── SKILL.md              # ADO の操作コマンドと、その使い分け
 │   ├── scripts/ado.py        # REST クライアント。Python 3 標準ライブラリのみ
 │   └── references/
-│       ├── loop.md           # ループの定義。段・入口条件・成果物・人間の承認点
-│       ├── writing.md        # 報告の書き方（全工程の共通規約）
+│       ├── loop.md           # ループの ADO 対応 (用語表・承認点の実装。正典は hotl-loop)
+│       ├── writing.md        # 報告の ADO 制約 (投稿先の書式。原則は output-contract)
 │       ├── workflows/
 │       │   └── research.md   # 支援工程: 調査して報告する
 │       ├── recipes.md        # WIQL の書き方、頻出フロー、トラブルシュート
 │       └── fields/           # 生成されるフィールド定義（コミットしない）
 └── coding-rules/
     └── SKILL.md              # 規約の抽出手順と、埋める欄の定義
+
+(コアのスキル hotl-loop / output-contract / consult-response / artifact-writing は
+ hotl-core リポジトリにあり、導入手順で同じ skills ディレクトリに symlink で並ぶ)
 ```
 
 ## 工程と能力を分ける
 
-スキルの境界は `loop.md` の段に従う。
+スキルの境界はループの正典（hotl-core の `hotl-loop`）の段に従う。
 
 | 層 | 置き場所 | 何を書くか |
 | --- | --- | --- |
-| 工程 | `ado-design` などの段スキル | その段の入口条件と手順。段固有の優先度・出力規約・上限 |
-| 共通 | `azure-devops/references/writing.md` | 報告の書き方。各段はここに固有の上限を足す |
+| コア | hotl-core（並置 clone） | ループの定義・段ごとの手順骨格・共通規約。サービス名を消しても成り立つ規則 |
+| 工程 | `ado-design` などの段スキル | 骨格の ADO への対応づけ。コマンド・フィールド名・段固有の制約 |
+| 共通 (ADO) | `azure-devops/references/writing.md` | 投稿先ごとの ADO 固有の書式制約 |
 | 能力 | `azure-devops` の `SKILL.md` と `scripts/ado.py` | ADO を操作する方法。コマンドと、その使い分け |
 
 工程を語彙に持つのは段スキルの description だけにする。ユーザーの依頼は「設計したい」
@@ -67,25 +76,41 @@ VS Code の agent mode で認識される。Claude Code も同じディレクト
 
 ## 導入
 
-### 1. 実行環境に clone する
+### 1. 実行環境に clone する（2 リポジトリ）
 
-Azure DevOps Server に到達できる環境（社内の開発マシンなど）に clone する。
+Azure DevOps Server に到達できる環境（社内の開発マシンなど）に、このリポジトリと
+コア（hotl-core）を並べて clone する。
 
 ```sh
 git clone <このリポジトリ> ~/src/azure-devops-skills
+git clone https://github.com/mis-o-ramen/hotl-core ~/src/hotl-core
 ```
 
 ### 2. スキルをホームディレクトリに配置する
 
 リポジトリを clone しただけでは、このリポジトリを開いているときしかスキルが発火しない。
-実際には別のコードリポジトリで作業しながら使うため、ホームディレクトリ配下に配置する。
+実際には別のコードリポジトリで作業しながら使うため、ホームディレクトリ配下に、
+**両リポジトリのスキルを同じディレクトリへ**配置する。
 
-**macOS / Linux** — ディレクトリ単位でシンボリックリンクを張る。`git pull` がそのまま
-反映される。
+配置は 2 段になる。**先にコアのスキルをこのリポジトリの skills ディレクトリへリンクし
+(untracked、`.gitignore` 済み)、次にそこからホームへリンクする。** 段スキル (`ado-*`) は
+`../hotl-loop/…` の兄弟参照を使うが、ディレクトリ symlink 越しの `..` はリンク先の親に
+解決されるため、コアのリンクは実体のある `.claude/skills/` の中に置く必要がある。
+ホームへ直接 2 系統をリンクする配置では参照が壊れる。
+
+**macOS / Linux** — `git pull` がそのまま反映される（コアの改訂も pull だけで届く）。
 
 ```sh
+# 1. コアのスキルをこのリポジトリの skills ディレクトリへ (untracked)
+for s in hotl-loop output-contract consult-response artifact-writing; do
+  ln -sfn ~/src/hotl-core/plugins/$s/skills/$s \
+          ~/src/azure-devops-skills/.claude/skills/$s
+done
+
+# 2. 全スキル (ADO 実体 + コアリンク) をホームへ
 mkdir -p ~/.claude/skills ~/.copilot/skills
-for s in azure-devops ado-design ado-implement ado-review ado-fix coding-rules; do
+for s in azure-devops ado-design ado-implement ado-review ado-fix coding-rules \
+         hotl-loop output-contract consult-response artifact-writing; do
   ln -s ~/src/azure-devops-skills/.claude/skills/$s ~/.claude/skills/$s
   ln -s ~/src/azure-devops-skills/.claude/skills/$s ~/.copilot/skills/$s
 done
@@ -94,8 +119,14 @@ done
 **Windows（PowerShell）** — シンボリックリンクには開発者モードか管理者権限が要る。
 
 ```powershell
+foreach ($s in "hotl-loop", "output-contract", "consult-response", "artifact-writing") {
+  New-Item -Force -ItemType SymbolicLink `
+           -Path "$HOME\src\azure-devops-skills\.claude\skills\$s" `
+           -Target "$HOME\src\hotl-core\plugins\$s\skills\$s"
+}
 foreach ($s in "azure-devops", "ado-design", "ado-implement", "ado-review", "ado-fix",
-               "coding-rules") {
+               "coding-rules", "hotl-loop", "output-contract", "consult-response",
+               "artifact-writing") {
   New-Item -ItemType SymbolicLink -Path "$HOME\.claude\skills\$s" `
            -Target "$HOME\src\azure-devops-skills\.claude\skills\$s"
 }
@@ -105,14 +136,18 @@ foreach ($s in "azure-devops", "ado-design", "ado-implement", "ado-review", "ado
 生成済みのフィールド定義はコピー先に置かれるため上書きに注意する。
 
 ```powershell
+foreach ($s in "hotl-loop", "output-contract", "consult-response", "artifact-writing") {
+  Copy-Item -Recurse -Force "$HOME\src\hotl-core\plugins\$s\skills\$s" `
+            "$HOME\src\azure-devops-skills\.claude\skills\$s"
+}
 Copy-Item -Recurse -Force "$HOME\src\azure-devops-skills\.claude\skills\*" `
           "$HOME\.claude\skills\"
 ```
 
 ファイル単位のリンクやコピーにはしない。スクリプトは自身の位置を基準にフィールド定義を
-書き出すため、ディレクトリ構造が保たれている必要がある。また、スキルは全部まとめて
-同じディレクトリに配置する。段スキル（`ado-*`）は能力層 `azure-devops` を兄弟参照する
-ため、一部だけ配置すると参照が壊れる。
+書き出すため、ディレクトリ構造が保たれている必要がある。また、スキルは**両リポジトリ分を
+全部まとめて同じディレクトリに**配置する。段スキル（`ado-*`）は能力層 `azure-devops` と
+コアの `hotl-loop` を兄弟参照するため、一部だけ配置すると参照が壊れる。
 
 ### 3. 環境変数を設定する
 

@@ -5,3 +5,10 @@ __pycache__/
 # サーバ名・プロジェクト名・社内のプロセステンプレート定義を含むため、コミットしない。
 .claude/skills/azure-devops/references/fields/*.md
 !.claude/skills/azure-devops/references/fields/README.md
+
+# hotl-core (並置 clone) のスキルへの symlink。導入手順が各マシンで張る。
+# ここに実体を置くと正典が二重になるため、コミットしない。
+.claude/skills/hotl-loop
+.claude/skills/output-contract
+.claude/skills/consult-response
+.claude/skills/artifact-writing
