@@ -1,0 +1,212 @@
+#!/usr/bin/env python3
+"""hotl の Azure DevOps バックエンド。
+
+インターフェース (hotl-ops/SKILL.md) のコマンドを同じディレクトリの ado.py に
+変換する。安全契約は ado.py が既に守っている (完了 / 破棄 / 投票 / スレッド解決の
+非実装、pr create の既定ドラフト)。
+
+PR 系コマンドは対象リポジトリ名が要る: --repo か環境変数 HOTL_REPO で渡す。
+pr diff はローカル clone に対する git で取る (ADS の REST は行単位の差分を返さない)。
+HOTL_DEBUG=1 のとき、実行せずに変換後の argv を 1 行 1 コマンドで表示する。
+"""
+import argparse
+import json
+import os
+import subprocess
+import sys
+
+ADO_PY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ado.py")
+TYPE_MAP = {"feature": "User Story", "bug": "Bug",
+            "epic": "Feature", "task": "Task"}
+CRITERIA_FIELD = "Microsoft.VSTS.Common.AcceptanceCriteria"
+
+
+def ado(*args):
+    return [sys.executable, ADO_PY] + [str(a) for a in args]
+
+
+def run(*argv_list, capture=False):
+    out = None
+    for argv in argv_list:
+        if os.environ.get("HOTL_DEBUG"):
+            print("+ " + " ".join(argv))
+            continue
+        if capture:
+            r = subprocess.run(argv, capture_output=True, text=True)
+            if r.returncode != 0:
+                sys.stderr.write(r.stderr)
+                sys.exit(r.returncode)
+            out = r.stdout
+        else:
+            r = subprocess.run(argv)
+            if r.returncode != 0:
+                sys.exit(r.returncode)
+    return out
+
+
+def text_arg(args):
+    if getattr(args, "body", None) is not None:
+        return args.body
+    return "@" + args.body_file
+
+
+def need_repo(args):
+    repo = args.repo or os.environ.get("HOTL_REPO")
+    if not repo:
+        sys.exit("hotl(azure-devops): PR 操作にはリポジトリ名が要ります。"
+                 "--repo <名前> か環境変数 HOTL_REPO を設定してください")
+    return repo
+
+
+def main():
+    p = argparse.ArgumentParser(prog="hotl (azure-devops)")
+    p.add_argument("--repo")
+    sub = p.add_subparsers(dest="group", required=True)
+
+    t = sub.add_parser("ticket").add_subparsers(dest="cmd", required=True)
+    c = t.add_parser("show")
+    c.add_argument("id", type=int)
+    c.add_argument("--comments", action="store_true")
+    c = t.add_parser("search")
+    c.add_argument("text")
+    c = t.add_parser("create")
+    c.add_argument("--type", required=True, choices=sorted(TYPE_MAP))
+    c.add_argument("--title", required=True)
+    c.add_argument("--body-file", required=True)
+    c.add_argument("--criteria-file")
+    c.add_argument("--parent", type=int)
+    c.add_argument("--label", action="append", default=[])
+    c = t.add_parser("update")
+    c.add_argument("id", type=int)
+    c.add_argument("--title")
+    c.add_argument("--body-file")
+    c.add_argument("--criteria-file")
+    c = t.add_parser("comment")
+    c.add_argument("id", type=int)
+    g = c.add_mutually_exclusive_group(required=True)
+    g.add_argument("--body")
+    g.add_argument("--body-file")
+
+    r = sub.add_parser("pr").add_subparsers(dest="cmd", required=True)
+    for name in ("show", "diff", "threads", "tickets"):
+        c = r.add_parser(name)
+        c.add_argument("id", type=int)
+        if name == "threads":
+            c.add_argument("--unresolved-only", action="store_true")
+    c = r.add_parser("create")
+    c.add_argument("--source", required=True)
+    c.add_argument("--target", required=True)
+    c.add_argument("--title", required=True)
+    c.add_argument("--body-file", required=True)
+    c.add_argument("--ticket", type=int)
+    c.add_argument("--publish", action="store_true")
+    c = r.add_parser("comment")
+    c.add_argument("id", type=int)
+    g = c.add_mutually_exclusive_group(required=True)
+    g.add_argument("--body")
+    g.add_argument("--body-file")
+    c.add_argument("--file")
+    c.add_argument("--line", type=int)
+
+    sub.add_parser("env")
+    c = sub.add_parser("raw")
+    c.add_argument("rest", nargs=argparse.REMAINDER)
+
+    args = p.parse_args()
+
+    if args.group == "env":
+        print("backend-id: azure-devops")
+        run(ado("wit", "types"))
+        return
+    if args.group == "raw":
+        run(ado(*args.rest))
+        return
+
+    if args.group == "ticket":
+        if args.cmd == "show":
+            cmds = [ado("wit", "get", args.id, "--relations")]
+            if args.comments:
+                cmds.append(ado("wit", "comments", args.id))
+            run(*cmds)
+        elif args.cmd == "search":
+            esc = args.text.replace("'", "''")
+            wiql = ("SELECT [System.Id] FROM WorkItems "
+                    f"WHERE [System.Title] CONTAINS '{esc}' "
+                    f"OR [System.Description] CONTAINS '{esc}' "
+                    "ORDER BY [System.ChangedDate] DESC")
+            run(ado("wit", "query", "--wiql", wiql, "--top", 30))
+        elif args.cmd == "create":
+            argv = ado("wit", "create", "--type", TYPE_MAP[args.type],
+                       "--title", args.title,
+                       "--field-multiline",
+                       f"System.Description=@{args.body_file}")
+            if args.criteria_file:
+                argv += ["--field-multiline",
+                         f"{CRITERIA_FIELD}=@{args.criteria_file}"]
+            if args.parent:
+                argv += ["--parent", str(args.parent)]
+            if args.label:
+                argv += ["--field", "System.Tags=" + "; ".join(args.label)]
+            run(argv)
+        elif args.cmd == "update":
+            argv = ado("wit", "update", args.id)
+            if args.title:
+                argv += ["--title", args.title]
+            if args.body_file:
+                argv += ["--field-multiline",
+                         f"System.Description=@{args.body_file}"]
+            if args.criteria_file:
+                argv += ["--field-multiline",
+                         f"{CRITERIA_FIELD}=@{args.criteria_file}"]
+            run(argv)
+        elif args.cmd == "comment":
+            run(ado("wit", "comment", args.id, "--text", text_arg(args)))
+        return
+
+    if args.group == "pr":
+        repo = need_repo(args)
+        if args.cmd == "show":
+            run(ado("pr", "get", args.id, "--repo", repo))
+        elif args.cmd == "threads":
+            argv = ado("pr", "threads", args.id, "--repo", repo)
+            if args.unresolved_only:
+                argv.append("--unresolved-only")
+            run(argv)
+        elif args.cmd == "tickets":
+            run(ado("pr", "workitems", args.id, "--repo", repo))
+        elif args.cmd == "diff":
+            if os.environ.get("HOTL_DEBUG"):
+                run(ado("pr", "get", args.id, "--repo", repo, "--raw"),
+                    ["git", "fetch", "origin"],
+                    ["git", "diff", "origin/<target>...origin/<source>"])
+                return
+            raw = run(ado("pr", "get", args.id, "--repo", repo, "--raw"),
+                      capture=True)
+            data = json.loads(raw)
+            src = data["sourceRefName"].removeprefix("refs/heads/")
+            tgt = data["targetRefName"].removeprefix("refs/heads/")
+            run(["git", "fetch", "origin"],
+                ["git", "diff", f"origin/{tgt}...origin/{src}"])
+        elif args.cmd == "create":
+            argv = ado("pr", "create", "--repo", repo,
+                       "--source", args.source, "--target", args.target,
+                       "--title", args.title,
+                       "--description", "@" + args.body_file)
+            if args.ticket:
+                argv += ["--work-item", str(args.ticket)]
+            if args.publish:
+                argv.append("--publish")
+            run(argv)
+        elif args.cmd == "comment":
+            argv = ado("pr", "comment", args.id, "--repo", repo,
+                       "--text", text_arg(args))
+            if args.file:
+                argv += ["--file", args.file]
+            if args.line:
+                argv += ["--line", str(args.line)]
+            run(argv)
+        return
+
+
+if __name__ == "__main__":
+    main()

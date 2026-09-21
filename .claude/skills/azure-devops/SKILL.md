@@ -1,6 +1,6 @@
 ---
 name: azure-devops
-description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する能力層。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新・コメント、受け入れ基準など型ごとに異なるフィールドと State の取得、プルリクエストの参照・スレッド・コメント・作成、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査、調査結果の報告。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。設計・実装・レビュー・指摘対応の各工程は兄弟スキル ado-design / ado-implement / ado-review / ado-fix が持ち、いずれもこのスキルを能力層として使う。Operate a self-hosted Azure DevOps / TFS server; the process stages live in the sibling ado-* skills.
+description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する能力層。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新・コメント、受け入れ基準など型ごとに異なるフィールドと State の取得、プルリクエストの参照・スレッド・コメント・作成、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査、調査結果の報告。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。設計・実装・レビュー・指摘対応の各工程はコアの hotl-design / hotl-implement / hotl-review / hotl-fix が持ち、hotl インターフェース (scripts/hotl-backend) 経由でこのスキルを能力層として使う。Operate a self-hosted Azure DevOps / TFS server; the process stages live in the hotl-* skills.
 ---
 
 # Azure DevOps Server（オンプレミス）
@@ -138,10 +138,10 @@ build logs <id> [--fetch] [--tail 200] [--log <logId>]
 
 | 依頼 | スキル |
 | --- | --- |
-| アイデアを作業アイテムに落とす（設計） | `ado-design` |
-| 作業アイテムを実装する | `ado-implement` |
-| プルリクエストをレビューする | `ado-review` |
-| レビュー指摘に対応する | `ado-fix` |
+| アイデアを作業アイテムに落とす（設計） | `hotl-design` (コア) |
+| 作業アイテムを実装する | `hotl-implement` (コア) |
+| プルリクエストをレビューする | `hotl-review` (コア) |
+| レビュー指摘に対応する | `hotl-fix` (コア) |
 
 段の定義と、どの段にいるかの判定は `references/loop.md` にある。
 

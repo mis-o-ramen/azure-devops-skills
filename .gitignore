@@ -12,3 +12,8 @@ __pycache__/
 .claude/skills/output-contract
 .claude/skills/consult-response
 .claude/skills/artifact-writing
+.claude/skills/hotl-ops
+.claude/skills/hotl-design
+.claude/skills/hotl-implement
+.claude/skills/hotl-review
+.claude/skills/hotl-fix

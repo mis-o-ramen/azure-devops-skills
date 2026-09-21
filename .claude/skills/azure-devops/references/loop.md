@@ -1,33 +1,28 @@
 # 開発ループ — Azure DevOps での対応
 
 ループの正典は兄弟スキル `../../hotl-loop/SKILL.md`(段の定義・入口条件・承認点・
-越えない線・今どの段かの判定)。**必ずそちらを読む。** hotl-loop は別リポジトリ
-hotl-core のスキルで、導入手順に従って同じ skills ディレクトリに並べて配置する。
-この文書に書くのは、その定義を Azure DevOps に対応づける差分だけ。
-手順を足す・変えるときは、先に正典の表を更新する。
+越えない線・今どの段かの判定)、工程スキルはコアの
+`hotl-design / hotl-implement / hotl-review / hotl-fix`。**必ずそちらを読む。**
+いずれも別リポジトリ hotl-core のスキルで、導入手順に従って同じ skills ディレクトリに
+並べて配置する。チケット / PR の操作は統一インターフェース
+(`../../hotl-ops/SKILL.md`) を通り、Azure DevOps への変換は
+`../scripts/hotl-backend` が行う。この文書に書くのは、コマンドに吸収されない
+Azure DevOps 固有の差分だけ。
 
 ## 用語の対応
 
 | コアの用語 | Azure DevOps では |
 | --- | --- |
-| チケット | 作業アイテム(ユーザーストーリー、フィーチャー、バグ、タスク、PBI) |
-| 受け入れ条件 | 受け入れ基準。フィールドは型ごとに違う(`wit describe-type` で確認。ユーザーストーリーは `Microsoft.VSTS.Common.AcceptanceCriteria`、バグは `Microsoft.VSTS.TCM.ReproSteps` が多い) |
-| プルリクエスト | Pull Request(`pr …` で操作。作成は既定でドラフト) |
+| チケット | 作業アイテム。`--type` は User Story (feature) / Bug / Feature (epic) / Task に変換される |
+| 受け入れ条件 | 受け入れ基準フィールド (`AcceptanceCriteria`)。格納はバックエンドが行う |
 | 着手承認 | 対話での依頼と、起票・作成前の本文承認 |
 | 停止 | 対話で質問し、回答を待つ |
 
-## 段と手順の対応
+## 支援工程 (ADO 固有)
 
-| 段 | 工程スキル | 手順骨格 (正典) |
-| --- | --- | --- |
-| 設計 | `ado-design` | `../../hotl-loop/references/stages/design.md` |
-| 実装 | `ado-implement` | `../../hotl-loop/references/stages/implement.md` |
-| レビュー | `ado-review` | `../../hotl-loop/references/stages/review.md` |
-| 修正 | `ado-fix` | `../../hotl-loop/references/stages/fix.md` |
-
-支援工程は正典の「調査」(手順は `workflows/research.md`)に加えて、ADO 固有に
-**ビルド調査**がある: ビルドが失敗しているとき、`../SKILL.md` の「ビルド」の手順で
-失敗ステップと原因を特定する。支援工程は成果物を先へ渡さず、呼んだ段に戻る。
+正典の「調査」(手順は `workflows/research.md`)に加えて、**ビルド調査**がある:
+ビルドが失敗しているとき、`../SKILL.md` の「ビルド」の手順で失敗ステップと原因を
+特定する。支援工程は成果物を先へ渡さず、呼んだ段に戻る。
 
 ## 判定の ADO 固有注意
 
