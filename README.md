@@ -14,9 +14,9 @@ HOTL ループの **Azure DevOps 手足**で、持つのは hotl インターフ
 | --- | --- | --- |
 | `azure-devops` | 能力層（段を持たない） | **hotl バックエンド** (`scripts/hotl-backend` → `ado.py`)、REST クライアント、調査・ビルド調査の支援手順、ADO 固有差分 (`references/loop.md`) |
 | `hotl-design` / `hotl-implement` / `hotl-review` / `hotl-fix` | コア（hotl-core 側） | 段ごとの工程スキル。発火語彙は「作業アイテムにしたい」「2251 を実装して」にも対応 |
+| `hotl-research` | コア（hotl-core 側） | 支援工程: 調べて作業アイテムに報告する |
 | `hotl-ops` / `hotl-loop` | コア（hotl-core 側） | 操作の統一インターフェースと、ループの定義 |
-| `output-contract` ほか | コア（hotl-core 側） | 出力・応答・成果物の共通規約 3 スキル |
-| `coding-rules` | ループ外 | プロジェクトのコーディング規約を整備する |
+| `output-contract` ほか / `coding-rules` | コア（hotl-core 側） | 出力・応答・成果物の共通規約 3 スキルと、規約整備の道具 |
 
 ## 構成
 
@@ -28,18 +28,14 @@ HOTL ループの **Azure DevOps 手足**で、持つのは hotl インターフ
 │   │   ├── hotl-backend      # hotl インターフェースの ADO 実装 (ado.py へ変換)
 │   │   └── ado.py            # REST クライアント。Python 3 標準ライブラリのみ
 │   └── references/
-│       ├── loop.md           # コマンドに吸収されない ADO 固有差分 (用語・承認点・ビルド調査)
-│       ├── writing.md        # 報告の ADO 制約 (投稿先の書式。原則は output-contract)
-│       ├── workflows/
-│       │   └── research.md   # 支援工程: 調査して報告する
+│       ├── loop.md           # ADO 固有差分 (承認点の形・ビルド調査・ID 引き当て)
 │       ├── recipes.md        # WIQL の書き方、頻出フロー、トラブルシュート
 │       └── fields/           # 生成されるフィールド定義（コミットしない）
-└── coding-rules/
-    └── SKILL.md              # 規約の抽出手順と、埋める欄の定義
+└── (これだけ)
 
-(工程スキル hotl-{design,implement,review,fix} とインターフェース hotl-ops、
- ループ定義 hotl-loop、規約 3 スキルは hotl-core リポジトリにあり、
- 導入手順で同じ skills ディレクトリに symlink で並ぶ)
+(工程スキル hotl-{design,implement,review,fix}、支援工程 hotl-research、
+ インターフェース hotl-ops、ループ定義 hotl-loop、規約 3 スキル、coding-rules は
+ hotl-core リポジトリにあり、導入手順で同じ skills ディレクトリに symlink で並ぶ)
 ```
 
 ## コア・バックエンド・能力を分ける
@@ -48,7 +44,7 @@ HOTL ループの **Azure DevOps 手足**で、持つのは hotl インターフ
 | --- | --- | --- |
 | コア | hotl-core（並置 clone） | ループの定義・工程スキル・インターフェース仕様・共通規約。サービス名を消しても成り立つもの |
 | バックエンド | `azure-devops/scripts/hotl-backend` | `hotl` コマンドの ADO への変換。型の対応・フィールドの格納・ドラフト既定はここがコードで守る |
-| 差分 | `azure-devops/references/loop.md` / `writing.md` | コマンドに吸収されない ADO 固有の規則 (承認点の形、投稿先の書式制約) |
+| 差分 | `azure-devops/references/loop.md` | コマンドに吸収されない ADO 固有の規則 (承認点の形・ビルド調査・ID 引き当て) |
 | 能力 | `azure-devops` の `SKILL.md` と `scripts/ado.py` | ADO を操作する方法。`hotl raw` の先で使う |
 
 工程の語彙と手順はコアの工程スキルが持つ (「実装したい」「作業アイテムにしたい」は
@@ -59,8 +55,8 @@ HOTL ループの **Azure DevOps 手足**で、持つのは hotl インターフ
 `../hotl-ops/` を、能力層内の文書は互いを兄弟参照するため、一部だけ配置すると
 参照が壊れる。
 
-ループの段に対応しない手順はこのリポジトリに置かない。`coding-rules` はループの外だが、
-実装の段が読む `CLAUDE.md` を整備する道具としてここに同居している。
+ループの段に対応しない手順はこのリポジトリに置かない (規約整備の道具 `coding-rules`
+もサービス非依存のため hotl-core 側にある)。
 
 ## Claude と GitHub Copilot の両方で動く
 
@@ -99,17 +95,17 @@ git clone https://github.com/mis-o-ramen/hotl-core ~/src/hotl-core
 
 ```sh
 # 1. コアのスキルをこのリポジトリの skills ディレクトリへ (untracked)
-for s in hotl-loop hotl-ops hotl-design hotl-implement hotl-review hotl-fix \
-         output-contract consult-response artifact-writing; do
+for s in hotl-loop hotl-ops hotl-design hotl-implement hotl-review hotl-fix hotl-research \
+         output-contract consult-response artifact-writing coding-rules; do
   ln -sfn ~/src/hotl-core/plugins/$s/skills/$s \
           ~/src/azure-devops-skills/.claude/skills/$s
 done
 
 # 2. 全スキル (ADO 実体 + コアリンク) をホームへ
 mkdir -p ~/.claude/skills ~/.copilot/skills
-for s in azure-devops coding-rules \
-         hotl-loop hotl-ops hotl-design hotl-implement hotl-review hotl-fix \
-         output-contract consult-response artifact-writing; do
+for s in azure-devops \
+         hotl-loop hotl-ops hotl-design hotl-implement hotl-review hotl-fix hotl-research \
+         output-contract consult-response artifact-writing coding-rules; do
   ln -s ~/src/azure-devops-skills/.claude/skills/$s ~/.claude/skills/$s
   ln -s ~/src/azure-devops-skills/.claude/skills/$s ~/.copilot/skills/$s
 done
@@ -119,14 +115,16 @@ done
 
 ```powershell
 foreach ($s in "hotl-loop", "hotl-ops", "hotl-design", "hotl-implement", "hotl-review",
-               "hotl-fix", "output-contract", "consult-response", "artifact-writing") {
+               "hotl-fix", "hotl-research", "output-contract", "consult-response",
+               "artifact-writing", "coding-rules") {
   New-Item -Force -ItemType SymbolicLink `
            -Path "$HOME\src\azure-devops-skills\.claude\skills\$s" `
            -Target "$HOME\src\hotl-core\plugins\$s\skills\$s"
 }
-foreach ($s in "azure-devops", "coding-rules",
+foreach ($s in "azure-devops",
                "hotl-loop", "hotl-ops", "hotl-design", "hotl-implement", "hotl-review",
-               "hotl-fix", "output-contract", "consult-response", "artifact-writing") {
+               "hotl-fix", "hotl-research", "output-contract", "consult-response",
+               "artifact-writing", "coding-rules") {
   New-Item -ItemType SymbolicLink -Path "$HOME\.claude\skills\$s" `
            -Target "$HOME\src\azure-devops-skills\.claude\skills\$s"
 }
@@ -137,7 +135,8 @@ foreach ($s in "azure-devops", "coding-rules",
 
 ```powershell
 foreach ($s in "hotl-loop", "hotl-ops", "hotl-design", "hotl-implement", "hotl-review",
-               "hotl-fix", "output-contract", "consult-response", "artifact-writing") {
+               "hotl-fix", "hotl-research", "output-contract", "consult-response",
+               "artifact-writing", "coding-rules") {
   Copy-Item -Recurse -Force "$HOME\src\hotl-core\plugins\$s\skills\$s" `
             "$HOME\src\azure-devops-skills\.claude\skills\$s"
 }

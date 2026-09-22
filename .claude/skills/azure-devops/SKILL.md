@@ -145,11 +145,9 @@ build logs <id> [--fetch] [--tail 200] [--log <logId>]
 
 段の定義と、どの段にいるかの判定は `references/loop.md` にある。
 
-調査して報告する依頼は工程ではなく支援作業で、手順は
-`references/workflows/research.md` に置いてある。
-
-報告の書き方は `references/writing.md` に共通で置いてある。各手順はそこに固有の上限を
-足す。
+調査して報告する依頼は工程ではなく支援作業で、手順はコアの `hotl-research`
+スキルにある。報告の書き方の正典は `output-contract` スキル、投稿先ごとの制約は
+`hotl-ops` の実装差表 (いずれも同じ skills ディレクトリに並ぶコアのスキル)。
 
 ## それ以外の操作
 
@@ -170,8 +168,6 @@ GET 以外の `request` は、実装済みコマンドが意図的に外して�
 
 ## 参照
 
-- `references/loop.md` — 開発ループの定義。段・入口条件・成果物・人間の承認点
-- `references/writing.md` — 報告の書き方と、投稿先ごとの制約
-- `references/workflows/research.md` — 調査して報告する手順
+- `references/loop.md` — ループの ADO 対応 (承認点の形・ビルド調査・ID 引き当て)
 - `references/recipes.md` — WIQL の書き方、頻出フロー、トラブルシュート
 - `references/fields/` — 生成されたプロジェクト×型ごとのフィールド定義

@@ -17,3 +17,5 @@ __pycache__/
 .claude/skills/hotl-implement
 .claude/skills/hotl-review
 .claude/skills/hotl-fix
+.claude/skills/hotl-research
+.claude/skills/coding-rules
