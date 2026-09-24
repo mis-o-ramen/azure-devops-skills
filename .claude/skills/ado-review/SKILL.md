@@ -13,7 +13,7 @@ Azure DevOps 上のプルリクエストをレビューし、指摘を投稿す�
 `../azure-devops/references/loop.md`）。条件が違う依頼は該当する段に渡す。
 
 - 指摘に対応して直す側 → `ado-fix`
-- プルリクエストがまだ無い → 実装は `ado-implement`、設計は `ado-design`
+- プルリクエストがまだ無い → 実装は `issue-implement`、設計は `ado-design`
 
 ## 能力層
 
