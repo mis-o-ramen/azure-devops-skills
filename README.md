@@ -40,6 +40,10 @@
 ├── artifact-writing/         # 配布物: 成果物の記述規約
 ├── git-conventions/          # 配布物: ブランチ名とコミットメッセージの規約
 └── README.md                 # 配布物の一覧（自動生成）
+
+scripts/
+├── install.sh                # スキルをホームディレクトリに配置する（macOS / Linux）
+└── install.ps1               # 同（Windows）
 ```
 
 ## ai-workflows と共用する工程スキル
@@ -103,27 +107,23 @@ git clone <このリポジトリ> ~/src/azure-devops-skills
 リポジトリを clone しただけでは、このリポジトリを開いているときしかスキルが発火しない。
 実際には別のコードリポジトリで作業しながら使うため、ホームディレクトリ配下に配置する。
 
-**macOS / Linux** — ディレクトリ単位でシンボリックリンクを張る。`git pull` がそのまま
-反映される。
+付属のスクリプトが `.claude/skills/` 直下のスキルをすべて、ディレクトリ単位の
+シンボリックリンクで `~/.claude/skills` と `~/.copilot/skills` に張る。`git pull` が
+そのまま反映される。
 
 ```sh
-mkdir -p ~/.claude/skills ~/.copilot/skills
-for s in azure-devops ado-design issue-implement ado-review ado-fix coding-rules \
-         output-contract artifact-writing git-conventions; do
-  ln -s ~/src/azure-devops-skills/.claude/skills/$s ~/.claude/skills/$s
-  ln -s ~/src/azure-devops-skills/.claude/skills/$s ~/.copilot/skills/$s
-done
+~/src/azure-devops-skills/scripts/install.sh          # macOS / Linux
 ```
-
-**Windows（PowerShell）** — シンボリックリンクには開発者モードか管理者権限が要る。
 
 ```powershell
-foreach ($s in "azure-devops", "ado-design", "issue-implement", "ado-review", "ado-fix",
-               "coding-rules", "output-contract", "artifact-writing", "git-conventions") {
-  New-Item -ItemType SymbolicLink -Path "$HOME\.claude\skills\$s" `
-           -Target "$HOME\src\azure-devops-skills\.claude\skills\$s"
-}
+# Windows。シンボリックリンクには開発者モードか管理者権限が要る
+powershell -ExecutionPolicy Bypass -File $HOME\src\azure-devops-skills\scripts\install.ps1
 ```
+
+**スキルが増えた・減った・改名された `git pull` の後は、必ずもう一度実行する。**
+リンクはスキルごとに張るので、新しいスキルは実行するまで配置されない。エージェントからは
+「そんなスキルは無い」に見え、工程の手順を読まずに能力層だけで作業を始める。スクリプトは
+何度実行してもよく、このリポジトリを指したまま切れたリンクは外す。
 
 権限が得られない場合はコピーでもよい。ただし `git pull` のたびにコピーし直す必要があり、
 生成済みのフィールド定義はコピー先に置かれるため上書きに注意する。
