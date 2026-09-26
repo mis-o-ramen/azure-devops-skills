@@ -26,7 +26,7 @@ description: オンプレミスの Azure DevOps Server 2022 を REST API 経由�
 Git の操作そのものはスコープ外。clone / diff / branch / commit は `git` CLI を使い、
 `scripts/ado.py` が扱うのは REST API でしか取得できないものに限る。ブランチ名と
 コミットメッセージの規約は `git-conventions` スキルにある。`references/` は全段が実行時に
-読む共通の文書の置き場で、REST の機能の範囲とは別（`loop.md`・`writing.md`）。
+読む共通の文書の置き場で、REST の機能の範囲とは別（`loop.md` など）。
 
 ## セットアップ
 
@@ -216,8 +216,9 @@ wit create --type "User Story" --title "…" --parent <親id> …
 wit comment <id> --text @comment.md
 ```
 
-プレーンテキストとして入る。表・折りたたみは使えない (`references/writing.md`)。
-記号で区切って 1 行にまとめ、長い根拠はプルリクエストに置く。
+プレーンテキストとして入る。記号はエスケープされ、表は崩れ、折りたたみは使えない。
+記号で区切って 1 行にまとめる。作業アイテム側に長文を置かず、詳細はプルリクエストに置いて、
+作業アイテムにはリンクと結論だけを書く。畳めない以上、根拠は省くしかない。
 
 ### PR を作る
 
@@ -268,7 +269,7 @@ pr comment <id> --repo <repo> --text @report.md
 ```
 
 トップレベルの新規スレッドとして入る。Markdown が効き、表・箇条書きを使える
-(`references/writing.md`)。スレッドを解決済みにしない。
+スレッドを解決済みにしない。
 
 ### PR の行にコメントする
 
@@ -290,8 +291,9 @@ pr comment <id> --repo <repo> --file <パス> --line <N> --text @finding.md
 調査して報告する依頼は工程ではなく支援作業で、手順は
 `references/workflows/research.md` に置いてある。
 
-報告の書き方は `references/writing.md` に共通で置いてある。各手順はそこに固有の上限を
-足す。
+報告の書き方は `output-contract` スキル（ai-workflows から配布）に共通で置いてある。
+各手順はそこに固有の上限を足す。投稿先ごとの書式の制約は、上の「チケットにコメントする」
+「PR にコメントする」にある。
 
 ## それ以外の操作
 
@@ -314,7 +316,6 @@ GET 以外の `request` は、実装済みコマンドが意図的に外して�
 ## 参照
 
 - `references/loop.md` — 開発ループの定義。段・入口条件・成果物・人間の承認点
-- `references/writing.md` — 報告の書き方と、投稿先ごとの制約
 - `references/workflows/research.md` — 調査して報告する手順
 - `references/recipes.md` — WIQL の書き方、頻出フロー、トラブルシュート
 - `references/fields/` — 生成されたプロジェクト×型ごとのフィールド定義

@@ -28,7 +28,6 @@
 │   ├── scripts/ado.py        # REST クライアント。Python 3 標準ライブラリのみ
 │   └── references/
 │       ├── loop.md           # ループの定義。段・入口条件・成果物・人間の承認点
-│       ├── writing.md        # 報告の書き方（全工程の共通規約）
 │       ├── workflows/
 │       │   └── research.md   # 支援工程: 調査して報告する
 │       ├── recipes.md        # WIQL の書き方、頻出フロー、トラブルシュート
@@ -68,7 +67,7 @@ cd ~/src/azure-devops-skills
 | 層 | 置き場所 | 何を書くか |
 | --- | --- | --- |
 | 工程 | 共用の `issue-design` / `issue-implement` / `pr-review` / `pr-fix`（ai-workflows から配布） | その段の入口条件と手順。段固有の優先度・出力規約・上限 |
-| 共通 | `azure-devops/references/writing.md` | 報告の書き方。各段はここに固有の上限を足す |
+| 共通 | `output-contract` / `artifact-writing`（ai-workflows から配布） | 報告と成果物の書き方。各段はここに固有の上限を足す |
 | 共通 | `git-conventions`（ai-workflows から配布） | ブランチ名とコミットメッセージの規約。対象リポジトリの規約が優先 |
 | 能力 | `azure-devops` の `SKILL.md` と `scripts/ado.py` | ADO を操作する方法。コマンドと、その使い分け。共用の工程スキルが引く操作の実装 |
 
