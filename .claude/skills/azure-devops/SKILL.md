@@ -1,6 +1,6 @@
 ---
 name: azure-devops
-description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する能力層。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新・コメント、受け入れ基準など型ごとに異なるフィールドと State の取得、プルリクエストの参照・スレッド・コメント・作成、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査、調査結果の報告。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。設計・実装・レビュー・指摘対応の各工程は兄弟スキル issue-design / issue-implement / ado-review / pr-fix が持ち、いずれもこのスキルを能力層として使う。Operate a self-hosted Azure DevOps / TFS server; the process stages live in the sibling stage skills (issue-design, issue-implement, ado-review, pr-fix); read the stage skill first.
+description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する能力層。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新・コメント、受け入れ基準など型ごとに異なるフィールドと State の取得、プルリクエストの参照・スレッド・コメント・作成、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査、調査結果の報告。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。設計・実装・レビュー・指摘対応の各工程は兄弟スキル issue-design / issue-implement / pr-review / pr-fix が持ち、いずれもこのスキルを能力層として使う。Operate a self-hosted Azure DevOps / TFS server; the process stages live in the sibling stage skills (issue-design, issue-implement, pr-review, pr-fix); read the stage skill first.
 ---
 
 # Azure DevOps Server（オンプレミス）
@@ -13,7 +13,7 @@ description: オンプレミスの Azure DevOps Server 2022 を REST API 経由�
 | --- | --- |
 | アイデアを作業アイテムに落とす（設計。「設計したい」「起票したい」） | `issue-design` |
 | 作業アイテムを実装する（「〜に着手」「〜を実装して」） | `issue-implement` |
-| プルリクエストをレビューする | `ado-review` |
+| プルリクエストをレビューする（「レビューして」「PR を見て」） | `pr-review` |
 | レビュー指摘に対応する（「指摘に対応して」「スレッドを直して」） | `pr-fix` |
 
 工程スキルが見当たらないときは、コードにもブランチにも触らずに止まり、スキルが配置されて
@@ -151,8 +151,8 @@ build logs <id> [--fetch] [--tail 200] [--log <logId>]
 
 ## 工程スキルが引く操作
 
-`issue-design`・`issue-implement`・`pr-fix` は GitHub と共用の工程スキルで、基盤ごとに違う操作を
-「チケットを読む」のような操作名で書いている。この節がその Azure DevOps での実行方法。操作名の一覧と契約は
+工程スキル (`issue-design`・`issue-implement`・`pr-review`・`pr-fix`) はすべて GitHub と
+共用で、基盤ごとに違う操作を「チケットを読む」のような操作名で書いている。この節がその Azure DevOps での実行方法。操作名の一覧と契約は
 中央リポジトリ ai-workflows の `docs/platform-ops.md` にあり、ここはそれを実装する。
 工程スキルの「チケット」は作業アイテム、「受け入れ条件」は受け入れ基準を指す。
 
@@ -238,7 +238,18 @@ pr get <id> --repo <repo>
 ```
 
 `sourceRefName` がソースブランチ、`targetRefName` がターゲットブランチ。どちらも
-`refs/heads/` を外して使う。
+`refs/heads/` を外して使う。`lastMergeSourceCommit` がソース側の最新コミット。
+
+### 紐づくチケットを読む
+
+```
+pr workitems <id> --repo <repo>
+```
+
+紐づく作業アイテムがフィールドごと返る。受け入れ基準は
+`Microsoft.VSTS.Common.AcceptanceCriteria` (型によっては別のフィールド。「チケットを
+読む」と同じく参照名を推測しない)。コメントは `wit comments <id>` で読む。空の配列なら
+紐づきは無い。
 
 ### PR の指摘を読む
 
@@ -258,6 +269,14 @@ pr comment <id> --repo <repo> --text @report.md
 
 トップレベルの新規スレッドとして入る。Markdown が効き、表・箇条書きを使える
 (`references/writing.md`)。スレッドを解決済みにしない。
+
+### PR の行にコメントする
+
+```
+pr comment <id> --repo <repo> --file <パス> --line <N> --text @finding.md
+```
+
+差分の行に紐づく新規スレッドになる。`--line` は変更後のファイルの行番号。
 
 `System.State` は変えない。
 

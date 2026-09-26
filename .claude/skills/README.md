@@ -18,3 +18,4 @@
 - issue-implement
 - output-contract
 - pr-fix
+- pr-review

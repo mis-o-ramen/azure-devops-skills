@@ -9,7 +9,7 @@
 | --- | --- | --- |
 | `issue-design` | 設計の段 | アイデアを、受け入れ基準まで埋まった作業アイテムに落とす（ai-workflows から配布） |
 | `issue-implement` | 実装の段 | 作業アイテムを実装し、プルリクエストを作る（ai-workflows から配布） |
-| `ado-review` | レビューの段 | プルリクエストをレビューし、優先度付きの指摘を投稿する |
+| `pr-review` | レビューの段 | プルリクエストをレビューし、優先度付きの指摘を投稿する（ai-workflows から配布） |
 | `pr-fix` | 修正の段 | レビュー指摘に対応し、同じブランチに push する（ai-workflows から配布） |
 | `azure-devops` | 能力層（段を持たない） | ADO の操作方法。REST クライアントと、調査などの支援手順 |
 | `coding-rules` | ループ外 | プロジェクトのコーディング規約を整備する |
@@ -21,7 +21,7 @@
 .claude/skills/
 ├── issue-design/SKILL.md     # 設計: アイデアを作業アイテムに落とす（配布物）
 ├── issue-implement/SKILL.md  # 実装: 作業アイテムを実装する（配布物）
-├── ado-review/SKILL.md       # レビュー: プルリクエストをレビューする
+├── pr-review/SKILL.md        # レビュー: プルリクエストをレビューする（配布物）
 ├── pr-fix/SKILL.md           # 修正: レビュー指摘に対応する（配布物）
 ├── azure-devops/             # 能力層。工程スキルはここを兄弟参照する
 │   ├── SKILL.md              # ADO の操作コマンドと、その使い分け
@@ -55,7 +55,7 @@ GitHub 向けの中央リポジトリ ai-workflows と、段の定義・手順�
 ```sh
 cd ~/src/azure-devops-skills
 /path/to/ai-workflows/scripts/sync-skills.sh \
-  --only issue-design,issue-implement,pr-fix,output-contract,artifact-writing,git-conventions
+  --only issue-design,issue-implement,pr-review,pr-fix,output-contract,artifact-writing,git-conventions
 ```
 
 共用の工程スキルは、基盤ごとに違う操作を「チケットを読む」「PR を作る」のような操作名で
@@ -68,7 +68,7 @@ cd ~/src/azure-devops-skills
 
 | 層 | 置き場所 | 何を書くか |
 | --- | --- | --- |
-| 工程 | 段スキル `ado-review`、共用の `issue-design` / `issue-implement` / `pr-fix` | その段の入口条件と手順。段固有の優先度・出力規約・上限 |
+| 工程 | 共用の `issue-design` / `issue-implement` / `pr-review` / `pr-fix`（ai-workflows から配布） | その段の入口条件と手順。段固有の優先度・出力規約・上限 |
 | 共通 | `azure-devops/references/writing.md` | 報告の書き方。各段はここに固有の上限を足す |
 | 共通 | `azure-devops/references/git.md` | ブランチ名とコミットメッセージの規約。対象リポジトリの規約が優先 |
 | 能力 | `azure-devops` の `SKILL.md` と `scripts/ado.py` | ADO を操作する方法。コマンドと、その使い分け。共用の工程スキルが引く操作の実装 |
@@ -77,8 +77,9 @@ cd ~/src/azure-devops-skills
 「実装に着手」といった工程の言葉で来るので、発火の語彙を工程側に寄せ、`azure-devops` は
 ADO の名詞（作業アイテム、PR、WIQL…）だけで発火する能力層に徹する。
 
-段スキルは能力層を `../azure-devops/` の兄弟参照で使う。ディレクトリ名を変えたり、
-一部のスキルだけを配置したりすると、この参照が壊れる。
+工程スキルは能力層をスキル名 `azure-devops` で引く。工程スキルと能力層は同じ skills
+ディレクトリに揃えて配置する。一部だけを配置すると、工程スキルから操作が引けずに手順が
+途中で止まる。
 
 ループの段に対応しない手順はこのリポジトリに置かない。`coding-rules` はループの外だが、
 実装の段が読む `CLAUDE.md` を整備する道具としてここに同居している。
@@ -213,4 +214,4 @@ GitHub Copilot にはコマンド単位の確認機構が無いため、Copilot 
 
 レビュー時の差分取得も REST では行わない。ADS の REST が返すのは変更ファイルの一覧まで
 なので、行単位の差分はローカル clone に対する `git diff` で取る。手順は
-`ado-review` スキルを参照。
+`pr-review` スキルを参照。
