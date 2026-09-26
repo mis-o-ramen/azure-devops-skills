@@ -1,6 +1,6 @@
 ---
 name: issue-implement
-description: 受け入れ条件の埋まったチケット (GitHub Issue / Azure DevOps の作業アイテム: ユーザーストーリー、バグ、タスク、PBI) を実装し、プルリクエストを作るまでの実装工程。ユーザーが「実装したい」「実装に着手」「着手して」「この Issue をやって」「この作業アイテムをやって」「#42 を実装して」「2251 を実装して」「ADO の 2251 に着手」「ユーザーストーリーを実装して」と言ったとき、GitHub・Azure DevOps (ADO / TFS) のどちらのチケットでも、実装の依頼なら必ずこの工程を先に読む。能力層 (github-ops / azure-devops) だけで実装を始めない。数字だけの名前のファイル (2251.md など) や裸の数字はチケット番号を指すことが多く、その実装依頼もこの工程。受け入れ条件の確認、条件ごとのテストの割り振りと落ちるテストの先行作成、最小の実装、プルリクエスト作成、チケットへの報告までを行う。Implement a GitHub issue or Azure DevOps work item through to a pull request.
+description: 受け入れ条件の埋まったチケット (GitHub Issue / Azure DevOps の作業アイテム — ユーザーストーリー、バグ、タスク、PBI) を実装し、プルリクエストを作るまでの実装工程。ユーザーが「実装したい」「実装に着手」「着手して」「この Issue をやって」「この作業アイテムをやって」「#42 を実装して」「2251 を実装して」「ADO の 2251 に着手」「ユーザーストーリーを実装して」と言ったとき、GitHub・Azure DevOps (ADO / TFS) のどちらのチケットでも、実装の依頼なら必ずこの工程を先に読む。能力層 (github-ops / azure-devops) だけで実装を始めない。数字だけの名前のファイル (2251.md など) や裸の数字はチケット番号を指すことが多く、その実装依頼もこの工程。受け入れ条件の確認、条件ごとのテストの割り振りと落ちるテストの先行作成、最小の実装、プルリクエスト作成、チケットへの報告までを行う。Implement a GitHub issue or Azure DevOps work item through to a pull request.
 ---
 
 # 実装 — チケットを実装する

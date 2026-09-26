@@ -1,6 +1,6 @@
 ---
 name: output-contract
-description: Use this skill for every response, report, comment, or document that a person will read to make a decision — PR descriptions, review comments, issue reports, research findings, status summaries, and answers in a chat session. It governs the SHAPE of the output: conclusion first, stated limits, no filler sections, no unverified claims, how to present options, and how to reference code. Load it before writing any deliverable prose. Do not use it to decide what is technically correct; it constrains presentation, not analysis.
+description: Use this skill for every response, report, comment, or document that a person will read to make a decision — PR descriptions, review comments, issue reports, research findings, status summaries, and answers in a chat session. It governs the SHAPE of the output — conclusion first, stated limits, no filler sections, no unverified claims, how to present options, and how to reference code. Load it before writing any deliverable prose. Do not use it to decide what is technically correct; it constrains presentation, not analysis.
 ---
 
 # 出力規約
