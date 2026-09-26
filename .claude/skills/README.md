@@ -14,5 +14,7 @@
 
 - artifact-writing
 - git-conventions
+- issue-design
 - issue-implement
 - output-contract
+- pr-fix
