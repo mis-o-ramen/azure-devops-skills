@@ -3,7 +3,7 @@
 #
 #   ./scripts/install.sh
 #
-# .claude/skills/ 直下のスキルをすべて ~/.claude/skills と ~/.copilot/skills に
+# .claude/skills/ 直下のスキルをすべて ~/.claude/skills・~/.copilot/skills・~/.agents/skills に
 # ディレクトリ単位のシンボリックリンクで張る。何度実行してもよい。
 # - スキルが増えたら張り、このリポジトリを指したまま切れたリンク (削除・改名された
 #   スキル) は外す
@@ -13,7 +13,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="$REPO/.claude/skills"
 
-for dest in "$HOME/.claude/skills" "$HOME/.copilot/skills"; do
+for dest in "$HOME/.claude/skills" "$HOME/.copilot/skills" "$HOME/.agents/skills"; do
   mkdir -p "$dest"
 
   for link in "$dest"/*; do

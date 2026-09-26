@@ -108,7 +108,7 @@ git clone <このリポジトリ> ~/src/azure-devops-skills
 実際には別のコードリポジトリで作業しながら使うため、ホームディレクトリ配下に配置する。
 
 付属のスクリプトが `.claude/skills/` 直下のスキルをすべて、ディレクトリ単位の
-シンボリックリンクで `~/.claude/skills` と `~/.copilot/skills` に張る。`git pull` が
+シンボリックリンクで `~/.claude/skills`・`~/.copilot/skills`・`~/.agents/skills` に張る。`git pull` が
 そのまま反映される。
 
 ```sh

@@ -2,14 +2,14 @@
 #
 #   powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 #
-# .claude/skills/ 直下のスキルをすべて ~/.claude/skills と ~/.copilot/skills に
+# .claude/skills/ 直下のスキルをすべて ~/.claude/skills・~/.copilot/skills・~/.agents/skills に
 # ディレクトリ単位のシンボリックリンクで張る。何度実行してもよい。
 # シンボリックリンクには開発者モードか管理者権限が要る。
 $ErrorActionPreference = "Stop"
 
 $Src = Join-Path (Split-Path -Parent $PSScriptRoot) ".claude\skills"
 
-foreach ($Dest in @("$HOME\.claude\skills", "$HOME\.copilot\skills")) {
+foreach ($Dest in @("$HOME\.claude\skills", "$HOME\.copilot\skills", "$HOME\.agents\skills")) {
   New-Item -ItemType Directory -Force -Path $Dest | Out-Null
 
   # このリポジトリを指したまま切れたリンク (削除・改名されたスキル) を外す
