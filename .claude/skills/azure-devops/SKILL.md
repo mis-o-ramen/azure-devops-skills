@@ -1,6 +1,6 @@
 ---
 name: azure-devops
-description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する能力層。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新・コメント、受け入れ基準など型ごとに異なるフィールドと State の取得、プルリクエストの参照・スレッド・コメント・作成、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査、調査結果の報告。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。設計・実装・レビュー・指摘対応の各工程は兄弟スキル ado-design / issue-implement / ado-review / ado-fix が持ち、いずれもこのスキルを能力層として使う。Operate a self-hosted Azure DevOps / TFS server; the process stages live in the sibling stage skills (ado-design, issue-implement, ado-review, ado-fix); read the stage skill first.
+description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する能力層。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新・コメント、受け入れ基準など型ごとに異なるフィールドと State の取得、プルリクエストの参照・スレッド・コメント・作成、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査、調査結果の報告。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。設計・実装・レビュー・指摘対応の各工程は兄弟スキル ado-design / issue-implement / ado-review / pr-fix が持ち、いずれもこのスキルを能力層として使う。Operate a self-hosted Azure DevOps / TFS server; the process stages live in the sibling stage skills (ado-design, issue-implement, ado-review, pr-fix); read the stage skill first.
 ---
 
 # Azure DevOps Server（オンプレミス）
@@ -14,7 +14,7 @@ description: オンプレミスの Azure DevOps Server 2022 を REST API 経由�
 | アイデアを作業アイテムに落とす（設計） | `ado-design` |
 | 作業アイテムを実装する（「〜に着手」「〜を実装して」） | `issue-implement` |
 | プルリクエストをレビューする | `ado-review` |
-| レビュー指摘に対応する | `ado-fix` |
+| レビュー指摘に対応する（「指摘に対応して」「スレッドを直して」） | `pr-fix` |
 
 工程スキルが見当たらないときは、コードにもブランチにも触らずに止まり、スキルが配置されて
 いないことを依頼者に伝える（README「導入」の手順で配置し直す）。このスキルだけで工程を
@@ -151,8 +151,8 @@ build logs <id> [--fetch] [--tail 200] [--log <logId>]
 
 ## 工程スキルが引く操作
 
-`issue-implement` は GitHub と共用の工程スキルで、基盤ごとに違う操作を「チケットを読む」の
-ような操作名で書いている。この節がその Azure DevOps での実行方法。操作名の一覧と契約は
+`issue-implement` と `pr-fix` は GitHub と共用の工程スキルで、基盤ごとに違う操作を
+「チケットを読む」のような操作名で書いている。この節がその Azure DevOps での実行方法。操作名の一覧と契約は
 中央リポジトリ ai-workflows の `docs/platform-ops.md` にあり、ここはそれを実装する。
 工程スキルの「チケット」は作業アイテム、「受け入れ条件」は受け入れ基準を指す。
 
@@ -192,6 +192,34 @@ pr create --repo <repo> --source <ソース> --target <ターゲット> \
 受け入れ基準を読むので、省かない。`--publish` を付けるのは本文の承認を得たときだけ
 (「プルリクエスト」の節)。PR テンプレートは `.azuredevops/pull_request_template.md`、
 無ければ `.github/pull_request_template.md`。
+
+### PR を読む
+
+```
+pr get <id> --repo <repo>
+```
+
+`sourceRefName` がソースブランチ、`targetRefName` がターゲットブランチ。どちらも
+`refs/heads/` を外して使う。
+
+### PR の指摘を読む
+
+```
+pr threads <id> --repo <repo>
+```
+
+差分の行に付いたスレッドとトップレベルのスレッドが、解決状態付きで返る。
+`--unresolved-only` で未解決だけに絞れるが、解決済みのスレッドに人間の判断が残って
+いることがあるので、対応方針に迷ったら絞らずに読む。
+
+### PR にコメントする
+
+```
+pr comment <id> --repo <repo> --text @report.md
+```
+
+トップレベルの新規スレッドとして入る。Markdown が効き、表・箇条書きを使える
+(`references/writing.md`)。スレッドを解決済みにしない。
 
 `System.State` は変えない。
 

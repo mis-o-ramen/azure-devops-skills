@@ -10,10 +10,10 @@
 | `ado-design` | 設計の段 | アイデアを、受け入れ基準まで埋まった作業アイテムに落とす |
 | `issue-implement` | 実装の段 | 作業アイテムを実装し、プルリクエストを作る（ai-workflows から配布） |
 | `ado-review` | レビューの段 | プルリクエストをレビューし、優先度付きの指摘を投稿する |
-| `ado-fix` | 修正の段 | レビュー指摘に対応し、同じブランチに push する |
+| `pr-fix` | 修正の段 | レビュー指摘に対応し、同じブランチに push する（ai-workflows から配布） |
 | `azure-devops` | 能力層（段を持たない） | ADO の操作方法。REST クライアントと、調査などの支援手順 |
 | `coding-rules` | ループ外 | プロジェクトのコーディング規約を整備する |
-| `output-contract` / `artifact-writing` / `git-conventions` | 共通規約 | `issue-implement` が読む出力・成果物・git の規約（ai-workflows から配布） |
+| `output-contract` / `artifact-writing` / `git-conventions` | 共通規約 | `issue-implement` / `pr-fix` が読む出力・成果物・git の規約（ai-workflows から配布） |
 
 ## 構成
 
@@ -22,7 +22,7 @@
 ├── ado-design/SKILL.md       # 設計: アイデアを作業アイテムに落とす
 ├── issue-implement/SKILL.md  # 実装: 作業アイテムを実装する（配布物）
 ├── ado-review/SKILL.md       # レビュー: プルリクエストをレビューする
-├── ado-fix/SKILL.md          # 修正: レビュー指摘に対応する
+├── pr-fix/SKILL.md           # 修正: レビュー指摘に対応する（配布物）
 ├── azure-devops/             # 能力層。工程スキルはここを兄弟参照する
 │   ├── SKILL.md              # ADO の操作コマンドと、その使い分け
 │   ├── scripts/ado.py        # REST クライアント。Python 3 標準ライブラリのみ
@@ -55,7 +55,7 @@ GitHub 向けの中央リポジトリ ai-workflows と、段の定義・手順�
 ```sh
 cd ~/src/azure-devops-skills
 /path/to/ai-workflows/scripts/sync-skills.sh \
-  --only issue-implement,output-contract,artifact-writing,git-conventions
+  --only issue-implement,pr-fix,output-contract,artifact-writing,git-conventions
 ```
 
 共用の工程スキルは、基盤ごとに違う操作を「チケットを読む」「PR を作る」のような操作名で
@@ -68,7 +68,7 @@ cd ~/src/azure-devops-skills
 
 | 層 | 置き場所 | 何を書くか |
 | --- | --- | --- |
-| 工程 | `ado-design` などの段スキル、共用の `issue-implement` | その段の入口条件と手順。段固有の優先度・出力規約・上限 |
+| 工程 | `ado-design` などの段スキル、共用の `issue-implement` / `pr-fix` | その段の入口条件と手順。段固有の優先度・出力規約・上限 |
 | 共通 | `azure-devops/references/writing.md` | 報告の書き方。各段はここに固有の上限を足す |
 | 共通 | `azure-devops/references/git.md` | ブランチ名とコミットメッセージの規約。対象リポジトリの規約が優先 |
 | 能力 | `azure-devops` の `SKILL.md` と `scripts/ado.py` | ADO を操作する方法。コマンドと、その使い分け。共用の工程スキルが引く操作の実装 |

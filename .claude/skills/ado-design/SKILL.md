@@ -16,7 +16,7 @@ description: アイデア・構想・要望を、Azure DevOps の受け入れ基
 （ループの定義は `../azure-devops/references/loop.md`）。条件が違う依頼は該当する段に渡す。
 
 - 受け入れ基準の埋まった作業アイテムが既にあり、実装を求められている → `issue-implement`
-- プルリクエストのレビュー → `ado-review`、レビュー指摘への対応 → `ado-fix`
+- プルリクエストのレビュー → `ado-review`、レビュー指摘への対応 → `pr-fix`
 
 起点はチャットの依頼でも、粗く起票済みの作業アイテムでもよい。作業アイテムが起点なら
 `wit get` と `wit comments` で読んでから始める。
