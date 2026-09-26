@@ -2,11 +2,12 @@
 
 オンプレミスの **Azure DevOps Server 2022** を使った開発を、人間が承認点で監督する
 ループ（human-on-the-loop）として回すためのエージェントスキル。ループの定義は
-[`loop.md`](.claude/skills/azure-devops/references/loop.md) にあり、各スキルと手順は
-その段に仕える。実行時にスキルから参照できるよう、定義は能力層スキルの中に置いてある。
+[`dev-loop`](.claude/skills/dev-loop/SKILL.md) スキルにあり、各スキルと手順はその段に
+仕える。定義は ai-workflows と共通で、そこから配布している。
 
 | スキル | ループでの位置 | 何をするか |
 | --- | --- | --- |
+| `dev-loop` | ループの定義 | 段・入口条件・成果物・人間の承認点と制御点（ai-workflows から配布） |
 | `issue-design` | 設計の段 | アイデアを、受け入れ基準まで埋まった作業アイテムに落とす（ai-workflows から配布） |
 | `issue-implement` | 実装の段 | 作業アイテムを実装し、プルリクエストを作る（ai-workflows から配布） |
 | `pr-review` | レビューの段 | プルリクエストをレビューし、優先度付きの指摘を投稿する（ai-workflows から配布） |
@@ -19,15 +20,15 @@
 
 ```
 .claude/skills/
+├── dev-loop/SKILL.md         # ループの定義（配布物）
 ├── issue-design/SKILL.md     # 設計: アイデアを作業アイテムに落とす（配布物）
 ├── issue-implement/SKILL.md  # 実装: 作業アイテムを実装する（配布物）
 ├── pr-review/SKILL.md        # レビュー: プルリクエストをレビューする（配布物）
 ├── pr-fix/SKILL.md           # 修正: レビュー指摘に対応する（配布物）
-├── azure-devops/             # 能力層。工程スキルはここを兄弟参照する
+├── azure-devops/             # 能力層。工程スキルがスキル名で引く
 │   ├── SKILL.md              # ADO の操作コマンドと、その使い分け
 │   ├── scripts/ado.py        # REST クライアント。Python 3 標準ライブラリのみ
 │   └── references/
-│       ├── loop.md           # ループの定義。段・入口条件・成果物・人間の承認点
 │       ├── workflows/
 │       │   └── research.md   # 支援工程: 調査して報告する
 │       ├── recipes.md        # WIQL の書き方、頻出フロー、トラブルシュート
@@ -53,7 +54,7 @@ GitHub 向けの中央リポジトリ ai-workflows と、段の定義・手順�
 ```sh
 cd ~/src/azure-devops-skills
 /path/to/ai-workflows/scripts/sync-skills.sh \
-  --only issue-design,issue-implement,pr-review,pr-fix,output-contract,artifact-writing,git-conventions
+  --only dev-loop,issue-design,issue-implement,pr-review,pr-fix,output-contract,artifact-writing,git-conventions
 ```
 
 共用の工程スキルは、基盤ごとに違う操作を「チケットを読む」「PR を作る」のような操作名で
@@ -62,7 +63,7 @@ cd ~/src/azure-devops-skills
 
 ## 工程と能力を分ける
 
-スキルの境界は `loop.md` の段に従う。
+スキルの境界は `dev-loop` の段に従う。
 
 | 層 | 置き場所 | 何を書くか |
 | --- | --- | --- |

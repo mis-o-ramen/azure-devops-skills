@@ -13,6 +13,7 @@
 配置されているスキル:
 
 - artifact-writing
+- dev-loop
 - git-conventions
 - issue-design
 - issue-implement
