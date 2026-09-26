@@ -8,18 +8,19 @@
 | スキル | ループでの位置 | 何をするか |
 | --- | --- | --- |
 | `ado-design` | 設計の段 | アイデアを、受け入れ基準まで埋まった作業アイテムに落とす |
-| `ado-implement` | 実装の段 | 作業アイテムを実装し、プルリクエストを作る |
+| `issue-implement` | 実装の段 | 作業アイテムを実装し、プルリクエストを作る（ai-workflows から配布） |
 | `ado-review` | レビューの段 | プルリクエストをレビューし、優先度付きの指摘を投稿する |
 | `ado-fix` | 修正の段 | レビュー指摘に対応し、同じブランチに push する |
 | `azure-devops` | 能力層（段を持たない） | ADO の操作方法。REST クライアントと、調査などの支援手順 |
 | `coding-rules` | ループ外 | プロジェクトのコーディング規約を整備する |
+| `output-contract` / `artifact-writing` / `git-conventions` | 共通規約 | `issue-implement` が読む出力・成果物・git の規約（ai-workflows から配布） |
 
 ## 構成
 
 ```
 .claude/skills/
 ├── ado-design/SKILL.md       # 設計: アイデアを作業アイテムに落とす
-├── ado-implement/SKILL.md    # 実装: 作業アイテムを実装する
+├── issue-implement/SKILL.md  # 実装: 作業アイテムを実装する（配布物）
 ├── ado-review/SKILL.md       # レビュー: プルリクエストをレビューする
 ├── ado-fix/SKILL.md          # 修正: レビュー指摘に対応する
 ├── azure-devops/             # 能力層。工程スキルはここを兄弟参照する
@@ -33,9 +34,33 @@
 │       │   └── research.md   # 支援工程: 調査して報告する
 │       ├── recipes.md        # WIQL の書き方、頻出フロー、トラブルシュート
 │       └── fields/           # 生成されるフィールド定義（コミットしない）
-└── coding-rules/
-    └── SKILL.md              # 規約の抽出手順と、埋める欄の定義
+├── coding-rules/
+│   └── SKILL.md              # 規約の抽出手順と、埋める欄の定義
+├── output-contract/          # 配布物: 出力規約
+├── artifact-writing/         # 配布物: 成果物の記述規約
+├── git-conventions/          # 配布物: ブランチ名とコミットメッセージの規約
+└── README.md                 # 配布物の一覧（自動生成）
+
+scripts/
+├── install.sh                # スキルをホームディレクトリに配置する（macOS / Linux）
+└── install.ps1               # 同（Windows）
 ```
+
+## ai-workflows と共用する工程スキル
+
+GitHub 向けの中央リポジトリ ai-workflows と、段の定義・手順は同じ。基盤に依存しない
+書き方にした工程スキルは ai-workflows を正典とし、このリポジトリへはコピーで配る。
+配布物は手で編集しない。直すときは ai-workflows を直して配り直す。
+
+```sh
+cd ~/src/azure-devops-skills
+/path/to/ai-workflows/scripts/sync-skills.sh \
+  --only issue-implement,output-contract,artifact-writing,git-conventions
+```
+
+共用の工程スキルは、基盤ごとに違う操作を「チケットを読む」「PR を作る」のような操作名で
+書いている。Azure DevOps での実行方法は `azure-devops` の `SKILL.md`「工程スキルが引く
+操作」が持つ。操作名の契約は ai-workflows の `docs/platform-ops.md`。
 
 ## 工程と能力を分ける
 
@@ -43,10 +68,10 @@
 
 | 層 | 置き場所 | 何を書くか |
 | --- | --- | --- |
-| 工程 | `ado-design` などの段スキル | その段の入口条件と手順。段固有の優先度・出力規約・上限 |
+| 工程 | `ado-design` などの段スキル、共用の `issue-implement` | その段の入口条件と手順。段固有の優先度・出力規約・上限 |
 | 共通 | `azure-devops/references/writing.md` | 報告の書き方。各段はここに固有の上限を足す |
 | 共通 | `azure-devops/references/git.md` | ブランチ名とコミットメッセージの規約。対象リポジトリの規約が優先 |
-| 能力 | `azure-devops` の `SKILL.md` と `scripts/ado.py` | ADO を操作する方法。コマンドと、その使い分け |
+| 能力 | `azure-devops` の `SKILL.md` と `scripts/ado.py` | ADO を操作する方法。コマンドと、その使い分け。共用の工程スキルが引く操作の実装 |
 
 工程を語彙に持つのは段スキルの description だけにする。ユーザーの依頼は「設計したい」
 「実装に着手」といった工程の言葉で来るので、発火の語彙を工程側に寄せ、`azure-devops` は
@@ -82,26 +107,23 @@ git clone <このリポジトリ> ~/src/azure-devops-skills
 リポジトリを clone しただけでは、このリポジトリを開いているときしかスキルが発火しない。
 実際には別のコードリポジトリで作業しながら使うため、ホームディレクトリ配下に配置する。
 
-**macOS / Linux** — ディレクトリ単位でシンボリックリンクを張る。`git pull` がそのまま
-反映される。
+付属のスクリプトが `.claude/skills/` 直下のスキルをすべて、ディレクトリ単位の
+シンボリックリンクで `~/.claude/skills`・`~/.copilot/skills`・`~/.agents/skills` に張る。`git pull` が
+そのまま反映される。
 
 ```sh
-mkdir -p ~/.claude/skills ~/.copilot/skills
-for s in azure-devops ado-design ado-implement ado-review ado-fix coding-rules; do
-  ln -s ~/src/azure-devops-skills/.claude/skills/$s ~/.claude/skills/$s
-  ln -s ~/src/azure-devops-skills/.claude/skills/$s ~/.copilot/skills/$s
-done
+~/src/azure-devops-skills/scripts/install.sh          # macOS / Linux
 ```
-
-**Windows（PowerShell）** — シンボリックリンクには開発者モードか管理者権限が要る。
 
 ```powershell
-foreach ($s in "azure-devops", "ado-design", "ado-implement", "ado-review", "ado-fix",
-               "coding-rules") {
-  New-Item -ItemType SymbolicLink -Path "$HOME\.claude\skills\$s" `
-           -Target "$HOME\src\azure-devops-skills\.claude\skills\$s"
-}
+# Windows。シンボリックリンクには開発者モードか管理者権限が要る
+powershell -ExecutionPolicy Bypass -File $HOME\src\azure-devops-skills\scripts\install.ps1
 ```
+
+**スキルが増えた・減った・改名された `git pull` の後は、必ずもう一度実行する。**
+リンクはスキルごとに張るので、新しいスキルは実行するまで配置されない。エージェントからは
+「そんなスキルは無い」に見え、工程の手順を読まずに能力層だけで作業を始める。スクリプトは
+何度実行してもよく、このリポジトリを指したまま切れたリンクは外す。
 
 権限が得られない場合はコピーでもよい。ただし `git pull` のたびにコピーし直す必要があり、
 生成済みのフィールド定義はコピー先に置かれるため上書きに注意する。

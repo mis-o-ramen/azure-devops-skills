@@ -14,7 +14,7 @@ description: Azure DevOps のプルリクエストに付いたレビュー指摘
 `../azure-devops/references/loop.md`）。条件が違う依頼は該当する段に渡す。
 
 - レビューする側 → `ado-review`
-- プルリクエストがまだ無い → 実装は `ado-implement`、設計は `ado-design`
+- プルリクエストがまだ無い → 実装は `issue-implement`、設計は `ado-design`
 
 ## 能力層
 

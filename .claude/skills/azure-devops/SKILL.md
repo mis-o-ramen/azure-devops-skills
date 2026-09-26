@@ -1,9 +1,24 @@
 ---
 name: azure-devops
-description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する能力層。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新・コメント、受け入れ基準など型ごとに異なるフィールドと State の取得、プルリクエストの参照・スレッド・コメント・作成、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査、調査結果の報告。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。設計・実装・レビュー・指摘対応の各工程は兄弟スキル ado-design / ado-implement / ado-review / ado-fix が持ち、いずれもこのスキルを能力層として使う。Operate a self-hosted Azure DevOps / TFS server; the process stages live in the sibling ado-* skills.
+description: オンプレミスの Azure DevOps Server 2022 を REST API 経由で操作する能力層。作業アイテム（ユーザーストーリー、フィーチャー、バグ、タスク、PBI）の検索・参照・作成・更新・コメント、受け入れ基準など型ごとに異なるフィールドと State の取得、プルリクエストの参照・スレッド・コメント・作成、PR に紐づく作業アイテムの取得、失敗したビルドパイプラインの調査、調査結果の報告。ユーザーが作業アイテム、ワークアイテム、ユーザーストーリー、バックログ、スプリント、イテレーション、WIQL、プルリクエスト、PR、ビルド、パイプライン、Azure DevOps、ADO、TFS に言及したときに使う。設計・実装・レビュー・指摘対応の各工程は兄弟スキル ado-design / issue-implement / ado-review / ado-fix が持ち、いずれもこのスキルを能力層として使う。Operate a self-hosted Azure DevOps / TFS server; the process stages live in the sibling stage skills (ado-design, issue-implement, ado-review, ado-fix); read the stage skill first.
 ---
 
 # Azure DevOps Server（オンプレミス）
+
+**依頼が工程（設計・実装・レビュー・指摘対応）なら、先にその工程スキルを読む。** このスキルは
+操作の方法だけを持ち、ブランチを切る・テストを先に書く・承認を得てから PR を作る、といった
+工程の手順を持たない。工程スキルを読まずに進めると、それらが丸ごと抜けたまま実装が始まる。
+
+| 依頼 | 先に読むスキル |
+| --- | --- |
+| アイデアを作業アイテムに落とす（設計） | `ado-design` |
+| 作業アイテムを実装する（「〜に着手」「〜を実装して」） | `issue-implement` |
+| プルリクエストをレビューする | `ado-review` |
+| レビュー指摘に対応する | `ado-fix` |
+
+工程スキルが見当たらないときは、コードにもブランチにも触らずに止まり、スキルが配置されて
+いないことを依頼者に伝える（README「導入」の手順で配置し直す）。このスキルだけで工程を
+代行しない。
 
 すべての操作は `scripts/ado.py` を通す（`python3 scripts/ado.py …`。`python3` がなければ
 `python`）。以下のパスはこのスキルのディレクトリからの相対パス。
@@ -134,17 +149,56 @@ build logs <id> [--fetch] [--tail 200] [--log <logId>]
 
 ビルドの実行トリガはスコープ外。
 
+## 工程スキルが引く操作
+
+`issue-implement` は GitHub と共用の工程スキルで、基盤ごとに違う操作を「チケットを読む」の
+ような操作名で書いている。この節がその Azure DevOps での実行方法。操作名の一覧と契約は
+中央リポジトリ ai-workflows の `docs/platform-ops.md` にあり、ここはそれを実装する。
+工程スキルの「チケット」は作業アイテム、「受け入れ条件」は受け入れ基準を指す。
+
+### チケットを読む
+
+```
+wit get <id> --relations
+wit comments <id>
+```
+
+受け入れ条件がどのフィールドにあるかは型で決まる。ユーザーストーリーなら
+`Microsoft.VSTS.Common.AcceptanceCriteria`、バグなら `Microsoft.VSTS.TCM.ReproSteps` に
+入っていることが多いが、参照名を推測せず「最初にフィールドを調べる」の手順で確認する。
+
+### 親チケットを読む
+
+`wit get <id> --relations` の `relations` のうち `System.LinkTypes.Hierarchy-Reverse` が
+親。その ID を `wit get` で読む。無ければ親は無い。
+
+### チケットにコメントする
+
+```
+wit comment <id> --text @comment.md
+```
+
+プレーンテキストとして入る。表・折りたたみは使えない (`references/writing.md`)。
+記号で区切って 1 行にまとめ、長い根拠はプルリクエストに置く。
+
+### PR を作る
+
+```
+pr create --repo <repo> --source <ソース> --target <ターゲット> \
+  --title "…" --description @body.md --work-item <id> --publish
+```
+
+`--work-item` が作業アイテムへの紐づけ。レビューの段は `pr workitems` でここから
+受け入れ基準を読むので、省かない。`--publish` を付けるのは本文の承認を得たときだけ
+(「プルリクエスト」の節)。PR テンプレートは `.azuredevops/pull_request_template.md`、
+無ければ `.github/pull_request_template.md`。
+
+`System.State` は変えない。
+
 ## 工程の作業はこのスキルでは進めない
 
-このスキルは操作の方法（能力層）だけを持つ。開発ループの段にあたる依頼は、兄弟スキル
-（同じ skills ディレクトリ直下）に手順がある。該当したらそちらを読んでから進める。
-
-| 依頼 | スキル |
-| --- | --- |
-| アイデアを作業アイテムに落とす（設計） | `ado-design` |
-| 作業アイテムを実装する | `ado-implement` |
-| プルリクエストをレビューする | `ado-review` |
-| レビュー指摘に対応する | `ado-fix` |
+開発ループの段にあたる依頼は、冒頭の表の工程スキル（同じ skills ディレクトリ直下）に
+手順がある。
 
 段の定義と、どの段にいるかの判定は `references/loop.md` にある。
 
