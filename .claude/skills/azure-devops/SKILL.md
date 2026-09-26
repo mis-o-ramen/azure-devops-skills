@@ -25,8 +25,8 @@ description: オンプレミスの Azure DevOps Server 2022 を REST API 経由�
 
 Git の操作そのものはスコープ外。clone / diff / branch / commit は `git` CLI を使い、
 `scripts/ado.py` が扱うのは REST API でしか取得できないものに限る。ブランチ名と
-コミットメッセージの規約は `git-conventions` スキルにある。`references/` は全段が実行時に
-読む共通の文書の置き場で、REST の機能の範囲とは別（`loop.md` など）。
+コミットメッセージの規約は `git-conventions` スキル、開発ループの定義は `dev-loop` スキルに
+ある。
 
 ## セットアップ
 
@@ -124,7 +124,7 @@ pr create --repo <repo> --source <branch> --target <branch> --title "…" [--pub
 
 `pr create` は既定で**ドラフト**として作る。公開はレビュアーへの通知を伴い、ここからは
 取り消せないため、`--publish` を付けるのは本文の承認を得たときだけ。作成そのものも
-`references/loop.md` の承認点で、ドラフトでも承認なしには作らない。
+`dev-loop` の承認点で、ドラフトでも承認なしには作らない。
 
 `--thread` は既存スレッドへの返信、`--file`/`--line` は差分の行に紐づく新規スレッド、
 どちらも指定しなければトップレベルの新規スレッドになる。ブランチ名の `refs/heads/` は
@@ -286,7 +286,7 @@ pr comment <id> --repo <repo> --file <パス> --line <N> --text @finding.md
 開発ループの段にあたる依頼は、冒頭の表の工程スキル（同じ skills ディレクトリ直下）に
 手順がある。
 
-段の定義と、どの段にいるかの判定は `references/loop.md` にある。
+段の定義と、どの段にいるかの判定は `dev-loop` スキルにある。
 
 調査して報告する依頼は工程ではなく支援作業で、手順は
 `references/workflows/research.md` に置いてある。
@@ -310,12 +310,11 @@ python3 scripts/ado.py request POST /wit/wiql --data @query.json
 
 GET 以外の `request` は、実装済みコマンドが意図的に外している操作にも到達できる。到達
 できることは許可ではない。プルリクエストの完了・破棄・投票と、指摘スレッドの解決済み化は、
-承認を求めてでも代行しない（`references/loop.md`「人間が握る制御点」）。URL を提示して
+承認を求めてでも代行しない（`dev-loop`「人間が握る制御点」）。URL を提示して
 人間が行う。それ以外の書き込みの `request` は、目的の操作を示して人間の承認を得てから使う。
 
 ## 参照
 
-- `references/loop.md` — 開発ループの定義。段・入口条件・成果物・人間の承認点
 - `references/workflows/research.md` — 調査して報告する手順
 - `references/recipes.md` — WIQL の書き方、頻出フロー、トラブルシュート
 - `references/fields/` — 生成されたプロジェクト×型ごとのフィールド定義
