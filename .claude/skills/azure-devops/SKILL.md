@@ -25,8 +25,8 @@ description: オンプレミスの Azure DevOps Server 2022 を REST API 経由�
 
 Git の操作そのものはスコープ外。clone / diff / branch / commit は `git` CLI を使い、
 `scripts/ado.py` が扱うのは REST API でしか取得できないものに限る。ブランチ名と
-コミットメッセージの規約は `references/git.md` にある。`references/` は全段が実行時に
-読む共通規約の置き場で、REST の機能の範囲とは別（`loop.md`・`writing.md` も同じ）。
+コミットメッセージの規約は `git-conventions` スキルにある。`references/` は全段が実行時に
+読む共通の文書の置き場で、REST の機能の範囲とは別（`loop.md`・`writing.md`）。
 
 ## セットアップ
 
@@ -315,7 +315,6 @@ GET 以外の `request` は、実装済みコマンドが意図的に外して�
 
 - `references/loop.md` — 開発ループの定義。段・入口条件・成果物・人間の承認点
 - `references/writing.md` — 報告の書き方と、投稿先ごとの制約
-- `references/git.md` — ブランチ名とコミットメッセージの規約（実装・修正の段が読む）
 - `references/workflows/research.md` — 調査して報告する手順
 - `references/recipes.md` — WIQL の書き方、頻出フロー、トラブルシュート
 - `references/fields/` — 生成されたプロジェクト×型ごとのフィールド定義
